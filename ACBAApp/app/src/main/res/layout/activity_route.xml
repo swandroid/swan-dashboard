@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/routeScrollView"
+    android:fillViewport="true"
+    android:focusableInTouchMode="true">
+
+    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/routeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="acba.acbaapp.RouteActivity"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eu tincidunt diam. Suspendisse fringilla sit amet arcu vitae dignissim. Vestibulum blandit id metus in interdum."
+            android:id="@+id/routeTextView" />
+
+        <WebView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/webView" />
+    </LinearLayout>
+</ScrollView>

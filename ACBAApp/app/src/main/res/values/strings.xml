@@ -1,0 +1,86 @@
+<resources>
+    <string name="app_name">ACBAApp</string>
+    <string name="action_settings">Settings</string>
+
+    <!--APP RESOURCES-->
+    <string name="title_activity_maps">Map</string>
+    <string name="maps_direction_url">http://maps.google.com/maps?f=d&amp;hl=en&amp;q=My+Location&amp;z=19&amp;t=m&amp;saddr=My+Location&amp;daddr=%1$f,%2$f</string>
+    <string name="expression">Expression</string>
+
+    <!-- SENSOR EXPRESSIONS -->
+    <string name="location_expression">self@location:location?min_time=\'1000\'&amp;provider=\'gps\'&amp;min_distance=\'0\'{ANY,1000}</string>
+    <string name="screen_expression">self@screen:is_screen_on{ANY,86400000}</string>
+    <string name="wifi_expression">self@wifi:ssid?discovery_interval=\'1000\'{ANY,900}</string>
+    <string name="sound_expression">self@sound:rms?audio_format=\'2\'&amp;audio_source=\'1\'&amp;channel_config=\'2\'&amp;peak_db=\'70\'&amp;sample_rate=\'8000\'&amp;sample_interval=\'10000\'{MAX,2000}</string>
+    <string name="step_counter_expression">self@step_counter:step_counter{ANY,86400000}</string>
+
+    <!--ROUTE ACTIVITY TITLES-->
+    <string name="title_activity_route">RouteActivity</string>
+    <string name="activity_title_parkings">Nearest parking</string>
+    <string name="activity_title_glass_container">Nearest glass container</string>
+    <string name="activity_title_farm">Nearest local farm</string>
+    <string name="activity_title_gp">Nearest general practitioner</string>
+
+    <!--MAP ACTIVITY TITLES-->
+    <string name="activity_title_public_urinal">Nearest public urinal</string>
+    <string name="activity_title_religious_meeting_points">Religious meeting points nearby</string>
+    <string name="activity_title_bike_spots">Bike spots nearby</string>
+    <string name="activity_title_ecopassages">Ecopassages nearby</string>
+    <string name="activity_title_monumental_trees">Monumental trees nearby</string>
+
+    <!--DETAILS ACTIVITY TITLES-->
+    <string name="title_activity_details">DetailsActivity</string>
+    <string name="activity_title_screen_checks">Screen checks</string>
+    <string name="activity_title_kilometers_traveled">Kilometers traveled</string>
+    <string name="activity_title_most_popular_song">Most popular song</string>
+    <string name="activity_title_wifi_stations_seen">Number of WiFi stations seen</string>
+    <string name="activity_title_sound_level">Sound level</string>
+    <string name="activity_title_population">Population of The Netherlands</string>
+
+    <!--INTENT EXTRAS KEYS-->
+    <string name="intent_extra_key_value">value</string>
+    <string name="intent_extra_key_request_code">request_code</string>
+    <string name="intent_extra_key_sensor_config_intent">sensor_config_intent</string>
+    <string name="intent_extra_key_stored_preference_key">stored_preference_key</string>
+    <string name="intent_extra_key_title">title</string>
+    <string name="intent_extra_key_coordinates">coordinates</string>
+    <string name="intent_extra_key_destination">destination</string>
+
+    <!--PREFERENCES KEYS-->
+    <string name="preference_key_location_expression">location_expression</string>
+    <string name="preference_key_wifi_expression">wifi_expression</string>
+    <string name="preference_key_screen_expression">screen_expression</string>
+    <string name="preference_key_sound_expression">sound_expression</string>
+    <string name="preference_key_step_counter_expression">step_counter_expression</string>
+
+    <!--API URLs-->
+    <string name="parkings_api_url">http://api.citysdk.waag.org/layers/parking.garage/objects?lat=%1$f&amp;lon=%2$f&amp;per_page=1</string>
+    <string name="monumental_trees_api_url">http://api.citysdk.waag.org/layers/amsterdam.monumental.trees/objects?lat=%1$f&amp;lon=%2$f&amp;radius=5000</string>
+    <string name="religious_meeting_points_api_url">http://maps.amsterdam.nl/_php/haalObjecten3.php?TABEL=RELIGIE&amp;SELECTIEKOLOM=Categorie_id&amp;THEMA=religie&amp;TAAL=undefined&amp;BEHEER=0</string>
+    <string name="local_farms_api_url">http://maps.amsterdam.nl/_php/haalObjecten3.php?TABEL=STREEKPRODUCTEN&amp;SELECT=1&amp;SELECTIEKOLOM=BRON_EIEREN&amp;THEMA=streekproducten&amp;TAAL=undefined&amp;BEHEER=0</string>
+    <string name="bike_spots_api_url">http://open.datapunt.amsterdam.nl/ivv/parkeren/locaties.json</string>
+    <string name="ecopassages_api_url">http://maps.amsterdam.nl/_php/haalObjecten3.php?TABEL=ECOPASSAGES&amp;SELECTIEKOLOM=SELECTIE&amp;FILTERKOLOM=FILTER&amp;THEMA=ecopassages&amp;TAAL=undefined&amp;BEHEER=0</string>
+    <string name="general_practitioner_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/huisartsen/export/json</string>
+    <string name="public_urinal_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/urinoirs_stadsdeel_centrum/export/json</string>
+    <string name="population_api_url">http://opendata.cbs.nl/ODataApi/odata/37296ned/TypedDataSet</string>
+    <string name="trash_container_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/afvalcontainers-1/export/json</string>
+    <string name="popular_song_url">http://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&amp;country=netherlands&amp;api_key=9f8c564d4232aaebeb9c4752c63e18d7&amp;limit=1&amp;format=json</string>
+
+    <!--INFORMATION CARDS VALUE SHARED PREFERENCE KEYS-->
+    <string name="preference_key_screen_checks">screen_checks</string>
+    <string name="preference_key_parking_spots">parking_spots</string>
+    <string name="preference_key_distance_traveled">distance_traveled</string>
+    <string name="preference_key_song">song</string>
+    <string name="preference_key_wifi_stations">wifi_stations</string>
+    <string name="preference_key_public_urinal">public_urinal</string>
+    <string name="preference_key_product_price">product_price</string>
+    <string name="preference_key_religious_meeting_points">religious_meeting_points</string>
+    <string name="preference_key_local_farms">local_farms</string>
+    <string name="preference_key_bike_spots">bike_spots</string>
+    <string name="preference_key_general_practitioners">general_practitioners</string>
+    <string name="preference_key_population">population</string>
+    <string name="preference_key_sound_level">sound_level</string>
+    <string name="preference_key_trash_containers">trash_containers</string>
+    <string name="preference_key_ecopassages">ecopassages</string>
+    <string name="preference_key_monumental_trees">monumental_trees</string>
+</resources>
