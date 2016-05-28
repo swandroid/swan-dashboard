@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/latitude_settings"
+        android:title="Latitude settings"/>
+    <item
+        android:id="@+id/longitude_settings"
+        android:title="Longitude settings"/>
+</menu>

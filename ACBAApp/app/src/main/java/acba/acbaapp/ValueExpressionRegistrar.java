@@ -1,12 +1,14 @@
 package acba.acbaapp;
 
 import android.content.Context;
+import android.location.Location;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import interdroid.swan.ExpressionManager;
+import interdroid.swan.SensorInfo;
 import interdroid.swan.SwanException;
 import interdroid.swan.ValueExpressionListener;
 import interdroid.swan.swansong.ExpressionFactory;
@@ -145,9 +147,14 @@ public class ValueExpressionRegistrar {
                 preferenceKey = activity.getString(R.string.preference_key_sound_expression);
                 break;
             }
-            case MainActivity.REQUEST_CODE_LOCATION_SENSOR: {
-                expression = activity.getString(R.string.location_expression);
-                preferenceKey = activity.getString(R.string.preference_key_location_expression);
+            case MainActivity.REQUEST_CODE_LATITUDE_SENSOR: {
+                expression = activity.getString(R.string.latitude_expression);
+                preferenceKey = activity.getString(R.string.preference_key_latitude_expression);
+                break;
+            }
+            case MainActivity.REQUEST_CODE_LONGITUDE_SENSOR: {
+                expression = activity.getString(R.string.longitude_expression);
+                preferenceKey = activity.getString(R.string.preference_key_longitude_expression);
                 break;
             }
             default: {

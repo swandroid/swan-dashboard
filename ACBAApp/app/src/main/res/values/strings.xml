@@ -8,11 +8,12 @@
     <string name="expression">Expression</string>
 
     <!-- SENSOR EXPRESSIONS -->
-    <string name="location_expression">self@location:location?min_time=\'1000\'&amp;provider=\'gps\'&amp;min_distance=\'0\'{ANY,1000}</string>
-    <string name="screen_expression">self@screen:is_screen_on{ANY,86400000}</string>
-    <string name="wifi_expression">self@wifi:ssid?discovery_interval=\'1000\'{ANY,900}</string>
-    <string name="sound_expression">self@sound:rms?audio_format=\'2\'&amp;audio_source=\'1\'&amp;channel_config=\'2\'&amp;peak_db=\'70\'&amp;sample_rate=\'8000\'&amp;sample_interval=\'10000\'{MAX,2000}</string>
-    <string name="step_counter_expression">self@step_counter:step_counter{ANY,86400000}</string>
+    <string name="latitude_expression">self@location:latitude?min_time=\'1000\'#provider=\'gps\'#min_distance=\'0\'$server_url=http://fs0.das5.cs.vu.nl:3000/~server_http_authorization=NoAuth~server_storage=FALSE~server_http_body_type=null~server_http_header=null~server_http_body=null~server_http_method=GET{ANY,1000}</string>
+    <string name="longitude_expression">self@location:longitude?min_time=\'1000\'#provider=\'gps\'#min_distance=\'0\'$server_url=http://fs0.das5.cs.vu.nl:3000/~server_http_authorization=NoAuth~server_storage=FALSE~server_http_body_type=null~server_http_header=null~server_http_body=null~server_http_method=GET{ANY,1000}</string>
+    <string name="screen_expression">self@screen:is_screen_on$server_storage=false{ANY,86400000}</string>
+    <string name="wifi_expression">self@wifi:ssid?discovery_interval=\'1000\'$server_storage=false{ANY,900}</string>
+    <string name="sound_expression">self@sound:rms?audio_format=\'2\'#audio_source=\'1\'#channel_config=\'2\'#peak_db=\'70\'#sample_rate=\'8000\'#sample_interval=\'10000\'$server_storage=false{MAX,2000}</string>
+    <string name="step_counter_expression">self@step_counter:step_counter$server_storage=false{ANY,86400000}</string>
 
     <!--ROUTE ACTIVITY TITLES-->
     <string name="title_activity_route">RouteActivity</string>
@@ -45,9 +46,11 @@
     <string name="intent_extra_key_title">title</string>
     <string name="intent_extra_key_coordinates">coordinates</string>
     <string name="intent_extra_key_destination">destination</string>
+    <string name="intent_extra_key_origin">origin</string>
 
     <!--PREFERENCES KEYS-->
-    <string name="preference_key_location_expression">location_expression</string>
+    <string name="preference_key_latitude_expression">latitude_expression</string>
+    <string name="preference_key_longitude_expression">longitude_expression</string>
     <string name="preference_key_wifi_expression">wifi_expression</string>
     <string name="preference_key_screen_expression">screen_expression</string>
     <string name="preference_key_sound_expression">sound_expression</string>

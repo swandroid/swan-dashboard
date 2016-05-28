@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.SphericalUtil;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +21,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import interdroid.swan.ExpressionManager;
 import interdroid.swan.SwanException;
+import interdroid.swan.ValueExpressionListener;
 import interdroid.swan.swansong.TimestampedValue;
 
 /**
@@ -137,6 +141,7 @@ public class InformationCardsData {
                         getString(R.string.not_available)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -169,10 +174,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -185,92 +197,112 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
-                                        if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.parkings_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity) context;
-                                                                    MapMarkerNode nearestParking = null;
-                                                                    int freeSpaces = 0;
-
-                                                                    try {
-                                                                        JSONObject jObj = new JSONObject(result);
-                                                                        JSONArray features = jObj.getJSONArray("features");
-                                                                        for (int i = 0; i < features.length(); i++) {
-                                                                            JSONObject parking = features.getJSONObject(i);
-                                                                            JSONObject data = parking
-                                                                                    .getJSONObject("properties")
-                                                                                    .getJSONObject("layers")
-                                                                                    .getJSONObject("parking.garage")
-                                                                                    .getJSONObject("data");
-                                                                            String label = data.getString("Name");
-                                                                            JSONArray coords = parking
-                                                                                    .getJSONObject("geometry")
-                                                                                    .getJSONArray("coordinates");
-                                                                            MapMarkerNode parkingNode = new MapMarkerNode(
-                                                                                    new MapMarker(
-                                                                                            label,
-                                                                                            new Coordinates(
-                                                                                                    coords.getDouble(1),
-                                                                                                    coords.getDouble(0)
-                                                                                            )
-                                                                                    ),
-                                                                                    value.getLatitude(),
-                                                                                    value.getLongitude()
-                                                                            );
-
-                                                                            if(nearestParking == null) {
-                                                                                nearestParking = parkingNode;
-                                                                                freeSpaces =
-                                                                                        data.optInt("FreeSpaceShort") +
-                                                                                                data.optInt("FreeSpaceLong");
-                                                                            } else if(
-                                                                                    parkingNode
-                                                                                            .getDistanceFromOrigin()
-                                                                                            < nearestParking
-                                                                                            .getDistanceFromOrigin()) {
-                                                                                nearestParking = parkingNode;
-                                                                                freeSpaces =
-                                                                                        data.optInt("FreeSpaceShort") +
-                                                                                                data.optInt("FreeSpaceLong");
-                                                                            }
-
-                                                                            MapMarkerInformationCard card =
-                                                                                    ((MapMarkerInformationCard)
-                                                                                            activity.data
-                                                                                                    .getTile(positionInGrid));
-                                                                            card.setMarker(nearestParking.getMarker());
-                                                                            card.setValue(String.format("%d", freeSpaces));
-                                                                            SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                            editor.putString(
-                                                                                    getString(R.string.preference_key_parking_spots),
-                                                                                    String.format("%d", freeSpaces)
-                                                                            );
-                                                                            editor.commit();
-                                                                            activity.adapter.notifyDataSetChanged();
-                                                                        }
-                                                                    } catch (JSONException e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                        if(arg1 != null && arg1.length > 0) {
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if(origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if(arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if(origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.parkings_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity) context;
+                                                MapMarkerNode nearestParking = null;
+                                                int freeSpaces = 0;
+
+                                                try {
+                                                    JSONObject jObj = new JSONObject(result);
+                                                    JSONArray features = jObj.getJSONArray("features");
+                                                    for (int i = 0; i < features.length(); i++) {
+                                                        JSONObject parking = features.getJSONObject(i);
+                                                        JSONObject data = parking
+                                                                .getJSONObject("properties")
+                                                                .getJSONObject("layers")
+                                                                .getJSONObject("parking.garage")
+                                                                .getJSONObject("data");
+                                                        String label = data.getString("Name");
+                                                        JSONArray coords = parking
+                                                                .getJSONObject("geometry")
+                                                                .getJSONArray("coordinates");
+                                                        MapMarkerNode parkingNode = new MapMarkerNode(
+                                                                new MapMarker(
+                                                                        label,
+                                                                        new Coordinates(
+                                                                                coords.getDouble(1),
+                                                                                coords.getDouble(0)
+                                                                        )
+                                                                ),
+                                                                origin.getLatitude(),
+                                                                origin.getLongitude()
+                                                        );
+
+                                                        if(nearestParking == null) {
+                                                            nearestParking = parkingNode;
+                                                            freeSpaces =
+                                                                    data.optInt("FreeSpaceShort") +
+                                                                            data.optInt("FreeSpaceLong");
+                                                        } else if(
+                                                                parkingNode
+                                                                        .getDistanceFromOrigin()
+                                                                        < nearestParking
+                                                                        .getDistanceFromOrigin()) {
+                                                            nearestParking = parkingNode;
+                                                            freeSpaces =
+                                                                    data.optInt("FreeSpaceShort") +
+                                                                            data.optInt("FreeSpaceLong");
+                                                        }
+
+                                                        MapMarkerInformationCard card =
+                                                                ((MapMarkerInformationCard)
+                                                                        activity.data
+                                                                                .getTile(positionInGrid));
+                                                        card.setMarker(nearestParking.getMarker());
+                                                        card.setValue(String.format("%d", freeSpaces));
+                                                        SharedPreferences.Editor editor = activity.prefs.edit();
+                                                        editor.putString(
+                                                                getString(R.string.preference_key_parking_spots),
+                                                                String.format("%d", freeSpaces)
+                                                        );
+                                                        editor.commit();
+                                                        activity.adapter.notifyDataSetChanged();
+                                                    }
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -439,6 +471,7 @@ public class InformationCardsData {
                         getString(R.string.zero)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -473,10 +506,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -489,65 +529,86 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
-                                        if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.public_urinal_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-
-                                                                    try {
-                                                                        JSONArray publicUrinals = new JSONObject(result).getJSONArray("features");
-                                                                        double minDistance = Double.MAX_VALUE, distance;
-                                                                        MapMarker nearestPublicUrinal = null;
-
-                                                                        for (int i = 0; i < publicUrinals.length(); i++) {
-                                                                            JSONObject urinal =
-                                                                                    publicUrinals.getJSONObject(i);
-                                                                            String label = urinal.getJSONObject("properties").getString("titel");
-                                                                            JSONArray coordinatesJSON = urinal.getJSONObject("geometry").getJSONArray("coordinates");
-                                                                            Coordinates coordinates = new Coordinates(coordinatesJSON.getDouble(1), coordinatesJSON.getDouble(0));
-                                                                            MapMarker marker = new MapMarker(label, coordinates);
-                                                                            distance = DistanceCalculator.distance(value.getLatitude(), value.getLongitude(),
-                                                                                    coordinates.getLatitude(), coordinates.getLongitude());
-
-                                                                            if (distance < minDistance) {
-                                                                                minDistance = distance;
-                                                                                nearestPublicUrinal = marker;
-                                                                            }
-                                                                        }
-                                                                        MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
-                                                                        tile.setMarker(nearestPublicUrinal);
-                                                                        String value = String.format(String.format("%.2f", minDistance));
-                                                                        tile.setValue(value);
-                                                                        SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                        editor.putString(
-                                                                                getString(R.string.preference_key_public_urinal),
-                                                                                value
-                                                                        );
-                                                                        editor.commit();
-                                                                        activity.adapter.notifyDataSetChanged();
-                                                                    } catch (JSONException e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                        if(arg1 != null && arg1.length > 0) {
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if(origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if(arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if(origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.public_urinal_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                LatLng from = new LatLng(origin.getLatitude(), origin.getLongitude());
+
+                                                try {
+                                                    JSONArray publicUrinals = new JSONObject(result).getJSONArray("features");
+                                                    double minDistance = Double.MAX_VALUE, distance;
+                                                    MapMarker nearestPublicUrinal = null;
+
+                                                    for (int i = 0; i < publicUrinals.length(); i++) {
+                                                        JSONObject urinal =
+                                                                publicUrinals.getJSONObject(i);
+                                                        String label = urinal.getJSONObject("properties").getString("titel");
+                                                        JSONArray coordinatesJSON = urinal.getJSONObject("geometry").getJSONArray("coordinates");
+                                                        Coordinates coordinates = new Coordinates(coordinatesJSON.getDouble(1), coordinatesJSON.getDouble(0));
+                                                        MapMarker marker = new MapMarker(label, coordinates);
+                                                        LatLng to = new LatLng(coordinates.getLatitude(), coordinates.getLongitude());
+                                                        distance = SphericalUtil.computeDistanceBetween(from, to);
+
+                                                        if (distance < minDistance) {
+                                                            minDistance = distance;
+                                                            nearestPublicUrinal = marker;
+                                                        }
+                                                    }
+                                                    MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
+                                                    tile.setMarker(nearestPublicUrinal);
+                                                    String value = String.format(String.format("%.2f", minDistance));
+                                                    tile.setValue(value);
+                                                    SharedPreferences.Editor editor = activity.prefs.edit();
+                                                    editor.putString(
+                                                            getString(R.string.preference_key_public_urinal),
+                                                            value
+                                                    );
+                                                    editor.commit();
+                                                    activity.adapter.notifyDataSetChanged();
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -584,6 +645,7 @@ public class InformationCardsData {
                         getString(R.string.zero)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -616,10 +678,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -632,62 +701,82 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.religious_meeting_points_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-                                                                    ArrayList<MapMarker> list;
-                                                                    OrderedMapMarkerList religiousMeetingPointsNearby = new OrderedMapMarkerList();
-
-                                                                    try {
-                                                                        XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
-                                                                        LandmarkXMLHandler landmarkXMLHandler = new LandmarkXMLHandler();
-                                                                        reader.setContentHandler(landmarkXMLHandler);
-                                                                        reader.parse(new InputSource(new StringReader(result)));
-                                                                        list = landmarkXMLHandler.getMarkers();
-
-                                                                        for(MapMarker marker : list) {
-                                                                            MapMarkerNode node = new MapMarkerNode(marker, value.getLatitude(), value.getLongitude());
-
-                                                                            if(node.getDistanceFromOrigin() < 5000) {
-                                                                                religiousMeetingPointsNearby.add(node);
-                                                                            }
-                                                                        }
-
-                                                                        MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
-                                                                        tile.setNearestMarkers(religiousMeetingPointsNearby);
-                                                                        String value = Integer.toString(list.size());
-                                                                        tile.setValue(value);
-                                                                        SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                        editor.putString(
-                                                                                getString(R.string.preference_key_religious_meeting_points),
-                                                                                value
-                                                                        );
-                                                                        editor.commit();
-                                                                        activity.adapter.notifyDataSetChanged();
-                                                                    } catch (Exception e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.religious_meeting_points_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                ArrayList<MapMarker> list;
+                                                OrderedMapMarkerList religiousMeetingPointsNearby = new OrderedMapMarkerList();
+
+                                                try {
+                                                    XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+                                                    LandmarkXMLHandler landmarkXMLHandler = new LandmarkXMLHandler();
+                                                    reader.setContentHandler(landmarkXMLHandler);
+                                                    reader.parse(new InputSource(new StringReader(result)));
+                                                    list = landmarkXMLHandler.getMarkers();
+
+                                                    for(MapMarker marker : list) {
+                                                        MapMarkerNode node = new MapMarkerNode(marker, origin.getLatitude(), origin.getLongitude());
+
+                                                        if(node.getDistanceFromOrigin() < 5000) {
+                                                            religiousMeetingPointsNearby.add(node);
+                                                        }
+                                                    }
+
+                                                    MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                    tile.setNearestMarkers(religiousMeetingPointsNearby);
+                                                    String value = Integer.toString(list.size());
+                                                    tile.setValue(value);
+                                                    SharedPreferences.Editor editor = activity.prefs.edit();
+                                                    editor.putString(
+                                                            getString(R.string.preference_key_religious_meeting_points),
+                                                            value
+                                                    );
+                                                    editor.commit();
+                                                    activity.adapter.notifyDataSetChanged();
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -702,6 +791,7 @@ public class InformationCardsData {
                         getString(R.string.not_available)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -736,10 +826,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -752,66 +849,86 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.local_farms_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity) context;
-                                                                    MapMarkerInformationCard tile = (MapMarkerInformationCard) activity.data.getTile(positionInGrid);
-                                                                    ArrayList<MapMarker> list;
-                                                                    MapMarkerNode nearestFarmWrapper = null;
-
-                                                                    try {
-                                                                        XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
-                                                                        LandmarkXMLHandler landmarkXMLHandler = new LandmarkXMLHandler();
-                                                                        reader.setContentHandler(landmarkXMLHandler);
-                                                                        reader.parse(new InputSource(new StringReader(result)));
-                                                                        list = landmarkXMLHandler.getMarkers();
-
-                                                                        double minDistance = Double.MAX_VALUE, distance;
-
-                                                                        for (MapMarker mapMarker : list) {
-                                                                            MapMarkerNode node = new MapMarkerNode(mapMarker, value.getLatitude(), value.getLongitude());
-                                                                            distance = node.getDistanceFromOrigin();
-
-                                                                            if (distance < minDistance) {
-                                                                                minDistance = distance;
-                                                                                nearestFarmWrapper = node;
-                                                                            }
-                                                                        }
-
-                                                                        tile.setMarker(nearestFarmWrapper.getMarker());
-                                                                        String value = String.format("%.2f", minDistance);
-                                                                        tile.setValue(value);
-                                                                        SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                        editor.putString(
-                                                                                getString(R.string.preference_key_local_farms),
-                                                                                value
-                                                                        );
-                                                                        editor.commit();
-                                                                        activity.adapter.notifyDataSetChanged();
-                                                                    } catch (Exception e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.local_farms_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity) context;
+                                                MapMarkerInformationCard tile = (MapMarkerInformationCard) activity.data.getTile(positionInGrid);
+                                                ArrayList<MapMarker> list;
+                                                MapMarkerNode nearestFarmWrapper = null;
+
+                                                try {
+                                                    XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+                                                    LandmarkXMLHandler landmarkXMLHandler = new LandmarkXMLHandler();
+                                                    reader.setContentHandler(landmarkXMLHandler);
+                                                    reader.parse(new InputSource(new StringReader(result)));
+                                                    list = landmarkXMLHandler.getMarkers();
+
+                                                    double minDistance = Double.MAX_VALUE, distance;
+
+                                                    for (MapMarker mapMarker : list) {
+                                                        MapMarkerNode node = new MapMarkerNode(mapMarker, origin.getLatitude(), origin.getLongitude());
+                                                        distance = node.getDistanceFromOrigin();
+
+                                                        if (distance < minDistance) {
+                                                            minDistance = distance;
+                                                            nearestFarmWrapper = node;
+                                                        }
+                                                    }
+
+                                                    tile.setMarker(nearestFarmWrapper.getMarker());
+                                                    String value = String.format("%.2f", minDistance);
+                                                    tile.setValue(value);
+                                                    SharedPreferences.Editor editor = activity.prefs.edit();
+                                                    editor.putString(
+                                                            getString(R.string.preference_key_local_farms),
+                                                            value
+                                                    );
+                                                    editor.commit();
+                                                    activity.adapter.notifyDataSetChanged();
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -826,6 +943,7 @@ public class InformationCardsData {
                         getString(R.string.zero)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -858,10 +976,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -874,60 +999,79 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.bike_spots_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-                                                                    MultipleMarkersInformationCard tile =
-                                                                            (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
-                                                                    OrderedMapMarkerList bikeSpotsNearby = new OrderedMapMarkerList();
-                                                                    try {
-                                                                        JSONArray bs = new JSONObject(result).getJSONArray("parkeerlocaties");
-                                                                        for (int i = 0; i < bs.length(); i++) {
-                                                                            JSONObject bikeSpotObject = bs.getJSONObject(i).getJSONObject("parkeerlocatie");
-                                                                            String label = bikeSpotObject.getString("title");
-                                                                            JSONObject location = new JSONObject(bikeSpotObject.getString("Locatie"));
-                                                                            JSONArray coordinates = location.getJSONArray("coordinates");
-                                                                            Coordinates coords = new Coordinates(coordinates.getDouble(1), coordinates.getDouble(0));
-                                                                            MapMarkerNode node = new MapMarkerNode(new MapMarker(label, coords), value.getLatitude(), value.getLongitude());
-                                                                            if (node.getDistanceFromOrigin() <= 5000) {
-                                                                                bikeSpotsNearby.add(node);
-                                                                            }
-                                                                        }
-                                                                    } catch (JSONException e) {
-                                                                        e.printStackTrace();
-                                                                    }
-
-                                                                    tile.setNearestMarkers(bikeSpotsNearby);
-                                                                    String value = Integer.toString(bikeSpotsNearby.size());
-                                                                    tile.setValue(value);
-                                                                    SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                    editor.putString(
-                                                                            getString(R.string.preference_key_bike_spots),
-                                                                            value
-                                                                    );
-                                                                    editor.commit();
-                                                                    activity.adapter.notifyDataSetChanged();
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.bike_spots_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                MultipleMarkersInformationCard tile =
+                                                        (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                OrderedMapMarkerList bikeSpotsNearby = new OrderedMapMarkerList();
+                                                try {
+                                                    JSONArray bs = new JSONObject(result).getJSONArray("parkeerlocaties");
+                                                    for (int i = 0; i < bs.length(); i++) {
+                                                        JSONObject bikeSpotObject = bs.getJSONObject(i).getJSONObject("parkeerlocatie");
+                                                        String label = bikeSpotObject.getString("title");
+                                                        JSONObject location = new JSONObject(bikeSpotObject.getString("Locatie"));
+                                                        JSONArray coordinates = location.getJSONArray("coordinates");
+                                                        Coordinates coords = new Coordinates(coordinates.getDouble(1), coordinates.getDouble(0));
+                                                        MapMarkerNode node = new MapMarkerNode(new MapMarker(label, coords), origin.getLatitude(), origin.getLongitude());
+                                                        if (node.getDistanceFromOrigin() <= 5000) {
+                                                            bikeSpotsNearby.add(node);
+                                                        }
+                                                    }
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+
+                                                tile.setNearestMarkers(bikeSpotsNearby);
+                                                String value = Integer.toString(bikeSpotsNearby.size());
+                                                tile.setValue(value);
+                                                SharedPreferences.Editor editor = activity.prefs.edit();
+                                                editor.putString(
+                                                        getString(R.string.preference_key_bike_spots),
+                                                        value
+                                                );
+                                                editor.commit();
+                                                activity.adapter.notifyDataSetChanged();
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -942,6 +1086,7 @@ public class InformationCardsData {
                         getString(R.string.not_available)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -976,10 +1121,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -992,65 +1144,86 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.general_practitioner_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-                                                                    MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
-                                                                    MapMarker nearestGeneralPractitioner = null;
-
-                                                                    try {
-                                                                        JSONArray generalPractitioners = new JSONObject(result).getJSONArray("features");
-                                                                        double minDistance = Double.MAX_VALUE, distance;
-
-                                                                        for (int i = 0; i < generalPractitioners.length(); i++) {
-                                                                            JSONObject gp = generalPractitioners.getJSONObject(i);
-                                                                            JSONArray coordinatesJson =
-                                                                                    gp.getJSONObject("geometry").getJSONArray("coordinates");
-                                                                            Coordinates coords = new Coordinates(coordinatesJson.getDouble(1), coordinatesJson.getDouble(0));
-                                                                            String label = gp.getJSONObject("properties").getString("titel");
-
-                                                                            distance = DistanceCalculator.distance(value.getLatitude(), value.getLongitude(),
-                                                                                    coords.getLatitude(), coords.getLongitude());
-
-                                                                            if (distance < minDistance) {
-                                                                                minDistance = distance;
-                                                                                nearestGeneralPractitioner = new MapMarker(label, coords);
-                                                                            }
-                                                                        }
-
-                                                                        tile.setMarker(nearestGeneralPractitioner);
-                                                                        String value = String.format(String.format("%.2f", minDistance));
-                                                                        tile.setValue(value);
-                                                                        SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                        editor.putString(
-                                                                                getString(R.string.preference_key_general_practitioners),
-                                                                                value
-                                                                        );
-                                                                        editor.commit();
-                                                                        activity.adapter.notifyDataSetChanged();
-                                                                    } catch (JSONException e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.general_practitioner_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
+                                                MapMarker nearestGeneralPractitioner = null;
+
+                                                try {
+                                                    JSONArray generalPractitioners = new JSONObject(result).getJSONArray("features");
+                                                    double minDistance = Double.MAX_VALUE, distance;
+
+                                                    for (int i = 0; i < generalPractitioners.length(); i++) {
+                                                        JSONObject gp = generalPractitioners.getJSONObject(i);
+                                                        JSONArray coordinatesJson =
+                                                                gp.getJSONObject("geometry").getJSONArray("coordinates");
+                                                        Coordinates coords = new Coordinates(coordinatesJson.getDouble(1), coordinatesJson.getDouble(0));
+                                                        String label = gp.getJSONObject("properties").getString("titel");
+
+                                                        LatLng from = new LatLng(origin.getLatitude(), origin.getLongitude());
+                                                        LatLng to = new LatLng(coords.getLatitude(), coords.getLongitude());
+                                                        distance = SphericalUtil.computeDistanceBetween(from, to);
+
+                                                        if (distance < minDistance) {
+                                                            minDistance = distance;
+                                                            nearestGeneralPractitioner = new MapMarker(label, coords);
+                                                        }
+                                                    }
+
+                                                    tile.setMarker(nearestGeneralPractitioner);
+                                                    String value = String.format(String.format("%.2f", minDistance));
+                                                    tile.setValue(value);
+                                                    SharedPreferences.Editor editor = activity.prefs.edit();
+                                                    editor.putString(
+                                                            getString(R.string.preference_key_general_practitioners),
+                                                            value
+                                                    );
+                                                    editor.commit();
+                                                    activity.adapter.notifyDataSetChanged();
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+                        requestManager.execute();
                     }
                 }
         ));
@@ -1140,10 +1313,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         sensorConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        sensorConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -1191,6 +1371,7 @@ public class InformationCardsData {
                         getString(R.string.not_available)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -1225,10 +1406,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -1241,68 +1429,89 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.trash_container_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-                                                                    MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
-                                                                    MapMarker nearestGlassContainer = null;
-
-                                                                    try {
-                                                                        JSONArray trashContainers = (new JSONObject(result)).getJSONArray("features");
-                                                                        double minDistance = Double.MAX_VALUE, distance;
-                                                                        for (int i = 0; i < trashContainers.length(); i++) {
-                                                                            JSONObject containerObj = trashContainers.getJSONObject(i);
-                                                                            JSONObject properties = containerObj.getJSONObject("properties");
-                                                                            String label = properties.getString("titel");
-                                                                            String type = properties.getString("type");
-
-                                                                            if (type.toLowerCase().equals("glas")) {
-                                                                                JSONArray coords = containerObj.getJSONObject("geometry").getJSONArray("coordinates");
-                                                                                Coordinates coordinates = new Coordinates(coords.getDouble(1), coords.getDouble(0));
-                                                                                distance = DistanceCalculator.distance(value.getLatitude(), value.getLongitude(),
-                                                                                        coordinates.getLatitude(), coordinates.getLongitude());
-
-                                                                                if (distance < minDistance) {
-                                                                                    minDistance = distance;
-                                                                                    nearestGlassContainer = new MapMarker(label, coordinates);
-                                                                                }
-                                                                            }
-                                                                        }
-
-                                                                        tile.setMarker(nearestGlassContainer);
-                                                                        String value = String.format("%.2f", minDistance);
-                                                                        tile.setValue(value);
-                                                                        SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                        editor.putString(
-                                                                                getString(R.string.preference_key_trash_containers),
-                                                                                value
-                                                                        );
-                                                                        editor.commit();
-                                                                        activity.adapter.notifyDataSetChanged();
-                                                                    } catch (JSONException e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private  void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.trash_container_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
+                                                MapMarker nearestGlassContainer = null;
+
+                                                try {
+                                                    JSONArray trashContainers = (new JSONObject(result)).getJSONArray("features");
+                                                    double minDistance = Double.MAX_VALUE, distance;
+                                                    for (int i = 0; i < trashContainers.length(); i++) {
+                                                        JSONObject containerObj = trashContainers.getJSONObject(i);
+                                                        JSONObject properties = containerObj.getJSONObject("properties");
+                                                        String label = properties.getString("titel");
+                                                        String type = properties.getString("type");
+
+                                                        if (type.toLowerCase().equals("glas")) {
+                                                            JSONArray coords = containerObj.getJSONObject("geometry").getJSONArray("coordinates");
+                                                            Coordinates coordinates = new Coordinates(coords.getDouble(1), coords.getDouble(0));
+                                                            LatLng from = new LatLng(origin.getLatitude(), origin.getLongitude()),
+                                                                    to = new LatLng(coordinates.getLatitude(), coordinates.getLongitude());
+                                                            distance = SphericalUtil.computeDistanceBetween(from, to);
+
+                                                            if (distance < minDistance) {
+                                                                minDistance = distance;
+                                                                nearestGlassContainer = new MapMarker(label, coordinates);
+                                                            }
+                                                        }
+                                                    }
+
+                                                    tile.setMarker(nearestGlassContainer);
+                                                    String value = String.format("%.2f", minDistance);
+                                                    tile.setValue(value);
+                                                    SharedPreferences.Editor editor = activity.prefs.edit();
+                                                    editor.putString(
+                                                            getString(R.string.preference_key_trash_containers),
+                                                            value
+                                                    );
+                                                    editor.commit();
+                                                    activity.adapter.notifyDataSetChanged();
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -1317,6 +1526,7 @@ public class InformationCardsData {
                         getString(R.string.zero)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -1349,10 +1559,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -1365,62 +1582,82 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.ecopassages_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-                                                                    MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
-                                                                    ArrayList<MapMarker> list;
-                                                                    OrderedMapMarkerList ecopassagesNearby = new OrderedMapMarkerList();
-
-                                                                    try {
-                                                                        XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
-                                                                        LandmarkXMLHandler landmarkXMLHandler = new LandmarkXMLHandler();
-                                                                        reader.setContentHandler(landmarkXMLHandler);
-                                                                        reader.parse(new InputSource(new StringReader(result)));
-                                                                        list = landmarkXMLHandler.getMarkers();
-
-                                                                        for(MapMarker marker : list) {
-                                                                            MapMarkerNode node = new MapMarkerNode(marker, value.getLatitude(), value.getLongitude());
-
-                                                                            if(node.getDistanceFromOrigin() < 5000) {
-                                                                                ecopassagesNearby.add(node);
-                                                                            }
-                                                                        }
-
-                                                                        tile.setNearestMarkers(ecopassagesNearby);
-                                                                        String value = Integer.toString(list.size());
-                                                                        tile.setValue(value);
-                                                                        SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                        editor.putString(
-                                                                                getString(R.string.preference_key_ecopassages),
-                                                                                value
-                                                                        );
-                                                                        editor.commit();
-                                                                        activity.adapter.notifyDataSetChanged();
-                                                                    } catch (Exception e) {
-                                                                        e.printStackTrace();
-                                                                    }
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.ecopassages_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                ArrayList<MapMarker> list;
+                                                OrderedMapMarkerList ecopassagesNearby = new OrderedMapMarkerList();
+
+                                                try {
+                                                    XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+                                                    LandmarkXMLHandler landmarkXMLHandler = new LandmarkXMLHandler();
+                                                    reader.setContentHandler(landmarkXMLHandler);
+                                                    reader.parse(new InputSource(new StringReader(result)));
+                                                    list = landmarkXMLHandler.getMarkers();
+
+                                                    for(MapMarker marker : list) {
+                                                        MapMarkerNode node = new MapMarkerNode(marker, origin.getLatitude(), origin.getLongitude());
+
+                                                        if(node.getDistanceFromOrigin() < 5000) {
+                                                            ecopassagesNearby.add(node);
+                                                        }
+                                                    }
+
+                                                    tile.setNearestMarkers(ecopassagesNearby);
+                                                    String value = Integer.toString(list.size());
+                                                    tile.setValue(value);
+                                                    SharedPreferences.Editor editor = activity.prefs.edit();
+                                                    editor.putString(
+                                                            getString(R.string.preference_key_ecopassages),
+                                                            value
+                                                    );
+                                                    editor.commit();
+                                                    activity.adapter.notifyDataSetChanged();
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));
@@ -1435,6 +1672,7 @@ public class InformationCardsData {
                         getString(R.string.zero)
                 ),
                 new InformationCardStrategy() {
+                    Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -1468,10 +1706,17 @@ public class InformationCardsData {
                             e.printStackTrace();
                         }
                         locationConfigIntent.putExtra(
-                                "expression",
+                                "latitude_expression",
                                 activity.prefs.getString(
-                                        getString(R.string.preference_key_location_expression),
-                                        getString(R.string.location_expression)
+                                        getString(R.string.preference_key_latitude_expression),
+                                        getString(R.string.latitude_expression)
+                                )
+                        );
+                        locationConfigIntent.putExtra(
+                                "longitude_expression",
+                                activity.prefs.getString(
+                                        getString(R.string.preference_key_longitude_expression),
+                                        getString(R.string.longitude_expression)
                                 )
                         );
                         intent.putExtra(
@@ -1484,65 +1729,85 @@ public class InformationCardsData {
                     @Override
                     public void resultHandler(final Context context, final int positionInGrid) {
                         ValueExpressionRegistrar.getInstance().register(
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR,
+                                MainActivity.REQUEST_CODE_LATITUDE_SENSOR,
                                 new SensorResultHandlers() {
                                     @Override
                                     public void onNewValues(String arg0, TimestampedValue[] arg1) {
                                         if (arg1 != null && arg1.length > 0) {
-                                            final Location value = (Location) (arg1[0].getValue());
-                                            RequestManager requestManager =
-                                                    new RequestManager(
-                                                            context,
-                                                            getString(R.string.monumental_trees_api_url),
-                                                            value,
-                                                            new RequestManagerHandlers() {
-                                                                @Override
-                                                                public void onPostExecute(Context context, String result) {
-                                                                    MainActivity activity = (MainActivity)context;
-                                                                    MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
-                                                                    OrderedMapMarkerList treesNearby = new OrderedMapMarkerList();
-
-                                                                    try {
-                                                                        JSONObject jObj = new JSONObject(result);
-                                                                        JSONArray features = jObj.getJSONArray("features");
-                                                                        for (int i = 0; i < features.length(); i++) {
-                                                                            JSONObject treeObj = features.getJSONObject(i);
-                                                                            String label = treeObj.getJSONObject("properties").getString("title");
-                                                                            JSONArray coords = treeObj.getJSONObject("geometry").getJSONArray("coordinates");
-                                                                            Coordinates coordinates = new Coordinates(coords.getDouble(1), coords.getDouble(0));
-                                                                            MapMarkerNode node = new MapMarkerNode(
-                                                                                    new MapMarker(label, coordinates),
-                                                                                    value.getLatitude(),
-                                                                                    value.getLongitude()
-                                                                            );
-
-                                                                            if(node.getDistanceFromOrigin() < 5000) {
-                                                                                treesNearby.add(node);
-                                                                            }
-                                                                        }
-                                                                    } catch (JSONException e) {
-                                                                        e.printStackTrace();
-                                                                    }
-
-                                                                    tile.setNearestMarkers(treesNearby);
-                                                                    String value = Integer.toString(treesNearby.size());
-                                                                    tile.setValue(value);
-                                                                    SharedPreferences.Editor editor = activity.prefs.edit();
-                                                                    editor.putString(
-                                                                            getString(R.string.preference_key_monumental_trees),
-                                                                            value
-                                                                    );
-                                                                    editor.commit();
-                                                                    activity.adapter.notifyDataSetChanged();
-                                                                }
-                                                            }
-                                                    );
-
-                                            requestManager.execute();
+                                            origin.setLatitude((double) arg1[0].getValue());
+                                            if (origin.hasLongitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
                                         }
                                     }
                                 }
                         );
+                        ValueExpressionRegistrar.getInstance().register(
+                                MainActivity.REQUEST_CODE_LONGITUDE_SENSOR,
+                                new SensorResultHandlers() {
+                                    @Override
+                                    public void onNewValues(String arg0, TimestampedValue[] arg1) {
+                                        if (arg1 != null && arg1.length > 0) {
+                                            origin.setLongitude((double) arg1[0].getValue());
+                                            if (origin.hasLatitude()) {
+                                                processNewLocation(positionInGrid);
+                                            }
+                                        }
+                                    }
+                                }
+                        );
+                    }
+
+                    private void processNewLocation(final int positionInGrid) {
+                        RequestManager requestManager =
+                                new RequestManager(
+                                        context,
+                                        getString(R.string.monumental_trees_api_url),
+                                        origin,
+                                        new RequestManagerHandlers() {
+                                            @Override
+                                            public void onPostExecute(Context context, String result) {
+                                                MainActivity activity = (MainActivity)context;
+                                                MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                OrderedMapMarkerList treesNearby = new OrderedMapMarkerList();
+
+                                                try {
+                                                    JSONObject jObj = new JSONObject(result);
+                                                    JSONArray features = jObj.getJSONArray("features");
+                                                    for (int i = 0; i < features.length(); i++) {
+                                                        JSONObject treeObj = features.getJSONObject(i);
+                                                        String label = treeObj.getJSONObject("properties").getString("title");
+                                                        JSONArray coords = treeObj.getJSONObject("geometry").getJSONArray("coordinates");
+                                                        Coordinates coordinates = new Coordinates(coords.getDouble(1), coords.getDouble(0));
+                                                        MapMarkerNode node = new MapMarkerNode(
+                                                                new MapMarker(label, coordinates),
+                                                                origin.getLatitude(),
+                                                                origin.getLongitude()
+                                                        );
+
+                                                        if(node.getDistanceFromOrigin() < 5000) {
+                                                            treesNearby.add(node);
+                                                        }
+                                                    }
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+
+                                                tile.setNearestMarkers(treesNearby);
+                                                String value = Integer.toString(treesNearby.size());
+                                                tile.setValue(value);
+                                                SharedPreferences.Editor editor = activity.prefs.edit();
+                                                editor.putString(
+                                                        getString(R.string.preference_key_monumental_trees),
+                                                        value
+                                                );
+                                                editor.commit();
+                                                activity.adapter.notifyDataSetChanged();
+                                            }
+                                        }
+                                );
+
+                        requestManager.execute();
                     }
                 }
         ));

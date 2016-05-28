@@ -1,5 +1,8 @@
 package acba.acbaapp;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.SphericalUtil;
+
 import java.io.Serializable;
 
 /**
@@ -18,12 +21,9 @@ public class MapMarkerNode implements Serializable {
 
         Coordinates coordinates = marker.getCoordinates();
 
-        this.distanceFromOrigin = DistanceCalculator.distance(
-                origin.getLatitude(),
-                origin.getLongitude(),
-                coordinates.getLatitude(),
-                coordinates.getLongitude()
-        );
+        LatLng from = new LatLng(origin.getLatitude(), origin.getLongitude()),
+                to = new LatLng(coordinates.getLatitude(), coordinates.getLongitude());
+        this.distanceFromOrigin = SphericalUtil.computeDistanceBetween(from, to);
     }
 
     public MapMarkerNode(
@@ -34,13 +34,10 @@ public class MapMarkerNode implements Serializable {
         next = null;
 
         Coordinates coordinates = marker.getCoordinates();
+        LatLng from = new LatLng(originLatitude, originLongitude);
+        LatLng to = new LatLng(coordinates.getLatitude(), coordinates.getLongitude());
 
-        this.distanceFromOrigin = DistanceCalculator.distance(
-                originLatitude,
-                originLongitude,
-                coordinates.getLatitude(),
-                coordinates.getLongitude()
-        );
+        this.distanceFromOrigin = SphericalUtil.computeDistanceBetween(from, to);
     }
 
     public MapMarkerInterface getMarker() {

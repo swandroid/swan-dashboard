@@ -2,6 +2,7 @@ package acba.acbaapp;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -11,6 +12,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +21,12 @@ import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
+
+import java.util.ArrayList;
+
+import interdroid.swan.ExpressionManager;
+import interdroid.swan.SensorInfo;
+import interdroid.swan.SwanException;
 
 public class MainActivity extends Activity {
 
@@ -32,11 +40,13 @@ public class MainActivity extends Activity {
             LOCATION_SENSOR_NAME = "location";
 
     /* random id */
-    public static final int REQUEST_CODE_SCREEN_SENSOR = 123,
-            REQUEST_CODE_WIFI_SENSOR = 456,
-            REQUEST_CODE_STEP_COUNTER_SENSOR = 789,
-            REQUEST_CODE_SOUND_SENSOR = 102,
-            REQUEST_CODE_LOCATION_SENSOR = 16;
+    public static final int REQUEST_CODE_SCREEN_SENSOR = 667,
+            REQUEST_CODE_WIFI_SENSOR = 668,
+            REQUEST_CODE_STEP_COUNTER_SENSOR = 669,
+            REQUEST_CODE_SOUND_SENSOR = 670,
+            REQUEST_CODE_LOCATION_SENSOR = 671,
+            REQUEST_CODE_LATITUDE_SENSOR = 672,
+            REQUEST_CODE_LONGITUDE_SENSOR = 673;
 
     SharedPreferences prefs;
 
@@ -63,6 +73,7 @@ public class MainActivity extends Activity {
         );
 
         setContentView(R.layout.activity_main);
+
         initialize();
     }
 

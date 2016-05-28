@@ -20,7 +20,7 @@ import java.net.URL;
 public class RequestManager extends AsyncTask<String, Void, String> {
     private Context context;
     private String  url;
-    private Location coordinates;
+    private Coordinates coordinates;
     private RequestManagerHandlers handlers;
 
     public RequestManager(Context context, String url, RequestManagerHandlers handlers) {
@@ -29,10 +29,10 @@ public class RequestManager extends AsyncTask<String, Void, String> {
         this.handlers = handlers;
     }
 
-    public RequestManager(Context context, String formattedUrl, final Location location, RequestManagerHandlers handlers) {
+    public RequestManager(Context context, String formattedUrl, Coordinates coordinates, RequestManagerHandlers handlers) {
         this.context = context;
         this.url = formattedUrl;
-        coordinates = location;
+        this.coordinates = coordinates;
         this.handlers = handlers;
     }
 
