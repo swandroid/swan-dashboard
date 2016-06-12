@@ -5,17 +5,18 @@ import android.content.Context;
 /**
  * Created by Alex on 24-May-16.
  */
-public class MultipleMarkersInformationCard extends InformationCard {
+public class LandmarksInformationCard extends InformationCard {
     private OrderedMapMarkerList nearestMarkers = null;
 
-    public MultipleMarkersInformationCard(
+    public LandmarksInformationCard(
             int positionInGrid,
             Context context,
             String title,
             String description,
             String value,
+            int imageResourceId,
             InformationCardStrategy strategy) {
-        super(positionInGrid, context, title, description, value, strategy);
+        super(positionInGrid, context, title, description, value, imageResourceId, strategy);
 
         nearestMarkers = new OrderedMapMarkerList();
     }

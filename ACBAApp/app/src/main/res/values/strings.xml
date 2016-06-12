@@ -47,6 +47,11 @@
     <string name="intent_extra_key_coordinates">coordinates</string>
     <string name="intent_extra_key_destination">destination</string>
     <string name="intent_extra_key_origin">origin</string>
+    <string name="intent_extra_key_menu_item_title">menu_item_title</string>
+
+    <!--MENU ITEM TITLES-->
+    <string name="latitude_menu_item_title">Latitude config</string>
+    <string name="longitude_menu_item_title">Longitude config</string>
 
     <!--PREFERENCES KEYS-->
     <string name="preference_key_latitude_expression">latitude_expression</string>

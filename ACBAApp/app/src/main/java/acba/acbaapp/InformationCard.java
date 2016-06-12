@@ -16,6 +16,7 @@ public class InformationCard {
     private String valueText;
     private InformationCardStrategy strategy;
     private int positionInGrid;
+    private int imageResourceId;
 
     /**
      *
@@ -37,12 +38,14 @@ public class InformationCard {
             String title,
             String description,
             String value,
+            int imageResourceId,
             InformationCardStrategy strategy) {
         this.positionInGrid = positionInGrid;
         this.context = context;
         this.title = title;
         this.descriptionText = description;
         this.valueText = value;
+        this.imageResourceId = imageResourceId;
         this.strategy = strategy;
     }
 
@@ -57,6 +60,8 @@ public class InformationCard {
     public String getValue() {
         return valueText;
     }
+
+    public int getImageResourceId() {return this.imageResourceId;}
 
     public void setValue(String value) {
         this.valueText = value;

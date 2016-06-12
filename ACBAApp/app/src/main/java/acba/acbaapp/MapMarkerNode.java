@@ -12,6 +12,7 @@ public class MapMarkerNode implements Serializable {
     private MapMarkerInterface marker;
     private MapMarkerNode next;
     private double distanceFromOrigin;
+    private Coordinates lastOrigin;
 
     public MapMarkerNode(
             MapMarkerInterface marker,
@@ -23,6 +24,7 @@ public class MapMarkerNode implements Serializable {
 
         LatLng from = new LatLng(origin.getLatitude(), origin.getLongitude()),
                 to = new LatLng(coordinates.getLatitude(), coordinates.getLongitude());
+        this.lastOrigin = origin;
         this.distanceFromOrigin = SphericalUtil.computeDistanceBetween(from, to);
     }
 
@@ -35,6 +37,7 @@ public class MapMarkerNode implements Serializable {
 
         Coordinates coordinates = marker.getCoordinates();
         LatLng from = new LatLng(originLatitude, originLongitude);
+        this.lastOrigin = new Coordinates(originLatitude, originLongitude);
         LatLng to = new LatLng(coordinates.getLatitude(), coordinates.getLongitude());
 
         this.distanceFromOrigin = SphericalUtil.computeDistanceBetween(from, to);
@@ -59,4 +62,6 @@ public class MapMarkerNode implements Serializable {
     public double getDistanceFromOrigin() {
         return distanceFromOrigin;
     }
+
+    public Coordinates getLastOrigin() { return lastOrigin; }
 }

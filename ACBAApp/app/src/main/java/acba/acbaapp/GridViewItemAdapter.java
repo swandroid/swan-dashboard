@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
@@ -58,17 +59,19 @@ public class GridViewItemAdapter extends BaseAdapter {
         InformationCard tile = data.getTile(position);
         holder.description.setText(tile.getDescription());
         holder.value.setText(tile.getValue());
-
+        holder.image.setImageResource(tile.getImageResourceId());
 
         return convertView;
     }
 
     static class ViewHolder {
         TextView description, value;
+        ImageView image;
 
         ViewHolder(View baseView) {
             description = (TextView)baseView.findViewById(R.id.itemDescriptionTextView);
             value = (TextView)baseView.findViewById(R.id.itemValueTextView);
+            image = (ImageView)baseView.findViewById(R.id.imageView);
         }
     }
 }

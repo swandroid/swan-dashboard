@@ -30,3 +30,4 @@ proguard/
 
 # Android Studio captures folder
 captures/
+ACBAApp/app/src/main/res/values/api_keys.xml

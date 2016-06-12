@@ -6,11 +6,11 @@ import java.io.Serializable;
  * Created by Alex on 24-May-16.
  */
 public class Coordinates implements Serializable {
-    private Double latitude, longitude;
+    private double latitude, longitude;
 
     public Coordinates() {
-        latitude = null;
-        longitude = null;
+        latitude = 0;
+        longitude = 0;
     }
 
     public Coordinates(double latitude, double longitude) {
@@ -35,10 +35,10 @@ public class Coordinates implements Serializable {
     }
 
     public boolean hasLatitude() {
-        return latitude != null;
+        return latitude != 0;
     }
 
     public boolean hasLongitude() {
-        return longitude != null;
+        return longitude != 0;
     }
 }

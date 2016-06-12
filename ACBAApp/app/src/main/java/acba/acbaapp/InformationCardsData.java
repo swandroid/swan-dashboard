@@ -3,7 +3,6 @@ package acba.acbaapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.SphericalUtil;
@@ -14,14 +13,15 @@ import org.json.JSONObject;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.SAXParserFactory;
 
 import interdroid.swan.ExpressionManager;
 import interdroid.swan.SwanException;
-import interdroid.swan.ValueExpressionListener;
 import interdroid.swan.swansong.TimestampedValue;
 
 /**
@@ -66,6 +66,7 @@ public class InformationCardsData {
                         getString(R.string.preference_key_screen_checks),
                         getString(R.string.zero)
                 ),
+                R.drawable.android52,
                 new InformationCardStrategy() {
                     MainActivity activity = (MainActivity)context;
 
@@ -131,7 +132,7 @@ public class InformationCardsData {
 
 
 
-        tiles.add(new MapMarkerInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_parkings),
@@ -140,56 +141,90 @@ public class InformationCardsData {
                         getString(R.string.preference_key_parking_spots),
                         getString(R.string.not_available)
                 ),
+                R.drawable.parking50,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity) context;
-                        MapMarkerInformationCard tile =
-                                (MapMarkerInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
-                        if(!tile.hasMarker()) {
+                        if(!tile.hasMarkers()) {
                             return;
                         }
-                        Coordinates coordinates =
-                                ((MapMarkerInformationCard)
+                        MapMarkerNode[] coordinates =
+                                ((LandmarksInformationCard)
                                         ((MainActivity) context).data.getTile(positionInGrid)
-                                ).getMarker().getCoordinates();
-                        Intent intent = new Intent(context, RouteActivity.class);
+                                ).getMarkers(1);
+                        Intent intent = new Intent(context, MapsActivity.class);
                         intent.putExtra(getString(
                                         R.string.intent_extra_key_title),
                                 activity.data.getTile(positionInGrid).getTitle()
                         );
                         intent.putExtra(
-                                getString(R.string.intent_extra_key_destination), coordinates
+                                getString(R.string.intent_extra_key_coordinates), coordinates
                         );
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -281,11 +316,15 @@ public class InformationCardsData {
                                                                             data.optInt("FreeSpaceLong");
                                                         }
 
-                                                        MapMarkerInformationCard card =
-                                                                ((MapMarkerInformationCard)
+                                                        LandmarksInformationCard card =
+                                                                ((LandmarksInformationCard)
                                                                         activity.data
                                                                                 .getTile(positionInGrid));
-                                                        card.setMarker(nearestParking.getMarker());
+
+                                                        OrderedMapMarkerList list =
+                                                                new OrderedMapMarkerList();
+                                                        list.add(nearestParking);
+                                                        card.setNearestMarkers(list);
                                                         card.setValue(String.format("%d", freeSpaces));
                                                         SharedPreferences.Editor editor = activity.prefs.edit();
                                                         editor.putString(
@@ -307,27 +346,27 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new InformationCard(
-                tiles.size(),
-                context,
-                getString(R.string.activity_title_kilometers_traveled),
-                getString(R.string.distance_traveled),
-                getStoredPreferenceString(
-                        getString(R.string.preference_key_distance_traveled),
-                        getString(R.string.zero)
-                ),
-                new InformationCardStrategy() {
-                    @Override
-                    public void onTileClickHandler(Context context, int positionInGrid) {
-
-                    }
-
-                    @Override
-                    public void resultHandler(Context context, int positionInGrid) {
-
-                    }
-                }
-        ));
+//        tiles.add(new InformationCard(
+//                tiles.size(),
+//                context,
+//                getString(R.string.activity_title_kilometers_traveled),
+//                getString(R.string.distance_traveled),
+//                getStoredPreferenceString(
+//                        getString(R.string.preference_key_distance_traveled),
+//                        getString(R.string.zero)
+//                ),
+//                new InformationCardStrategy() {
+//                    @Override
+//                    public void onTileClickHandler(Context context, int positionInGrid) {
+//
+//                    }
+//
+//                    @Override
+//                    public void resultHandler(Context context, int positionInGrid) {
+//
+//                    }
+//                }
+//        ));
 
         tiles.add(new InformationCard(
                 tiles.size(),
@@ -338,6 +377,7 @@ public class InformationCardsData {
                         getString(R.string.preference_key_song),
                         getString(R.string.not_available)
                 ),
+                R.drawable.music48,
                 new InformationCardStrategy() {
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -399,6 +439,7 @@ public class InformationCardsData {
                         getString(R.string.preference_key_wifi_stations),
                         getString(R.string.zero)
                 ),
+                R.drawable.wifi48,
                 new InformationCardStrategy() {
                     MainActivity activity = (MainActivity)context;
 
@@ -461,7 +502,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MapMarkerInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_public_urinal),
@@ -470,58 +511,90 @@ public class InformationCardsData {
                         getString(R.string.preference_key_public_urinal),
                         getString(R.string.zero)
                 ),
+                R.drawable.urinate48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MapMarkerInformationCard tile =
-                                (MapMarkerInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
-                        if(!tile.hasMarker()) {
+                        if(!tile.hasMarkers()) {
                             return;
                         }
-                        Coordinates coordinates =
-                                ((MapMarkerInformationCard)
+                        MapMarkerNode[] coordinates =
+                                ((LandmarksInformationCard)
                                         ((MainActivity)context).data.getTile(positionInGrid)
-                                ).getMarker().getCoordinates();
-                        Intent intent = new Intent(context, RouteActivity.class);
+                                ).getMarkers(1);
+                        Intent intent = new Intent(context, MapsActivity.class);
                         intent.putExtra(getString(
                                         R.string.intent_extra_key_title),
                                 activity.data.getTile(positionInGrid).getTitle()
                         );
                         intent.putExtra(
-                                getString(R.string.intent_extra_key_destination), coordinates
+                                getString(R.string.intent_extra_key_coordinates), coordinates
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -573,7 +646,7 @@ public class InformationCardsData {
                                                 try {
                                                     JSONArray publicUrinals = new JSONObject(result).getJSONArray("features");
                                                     double minDistance = Double.MAX_VALUE, distance;
-                                                    MapMarker nearestPublicUrinal = null;
+                                                    MapMarkerNode nearestPublicUrinal = null;
 
                                                     for (int i = 0; i < publicUrinals.length(); i++) {
                                                         JSONObject urinal =
@@ -587,11 +660,13 @@ public class InformationCardsData {
 
                                                         if (distance < minDistance) {
                                                             minDistance = distance;
-                                                            nearestPublicUrinal = marker;
+                                                            nearestPublicUrinal = new MapMarkerNode(marker, origin);
                                                         }
                                                     }
-                                                    MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
-                                                    tile.setMarker(nearestPublicUrinal);
+                                                    LandmarksInformationCard tile = (LandmarksInformationCard)activity.data.getTile(positionInGrid);
+                                                    OrderedMapMarkerList list = new OrderedMapMarkerList();
+                                                    list.add(nearestPublicUrinal);
+                                                    tile.setNearestMarkers(list);
                                                     String value = String.format(String.format("%.2f", minDistance));
                                                     tile.setValue(value);
                                                     SharedPreferences.Editor editor = activity.prefs.edit();
@@ -613,29 +688,29 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new InformationCard(
-                tiles.size(),
-                context,
-                "",
-                getString(R.string.product_price_abroad),
-                getStoredPreferenceString(
-                        getString(R.string.preference_key_product_price),
-                        getString(R.string.not_available)
-                ),
-                new InformationCardStrategy() {
-                    @Override
-                    public void onTileClickHandler(Context context, int positionInGrid) {
+//        tiles.add(new InformationCard(
+//                tiles.size(),
+//                context,
+//                "",
+//                getString(R.string.product_price_abroad),
+//                getStoredPreferenceString(
+//                        getString(R.string.preference_key_product_price),
+//                        getString(R.string.not_available)
+//                ),
+//                new InformationCardStrategy() {
+//                    @Override
+//                    public void onTileClickHandler(Context context, int positionInGrid) {
+//
+//                    }
+//
+//                    @Override
+//                    public void resultHandler(Context context, int positionInGrid) {
+//
+//                    }
+//                }
+//        ));
 
-                    }
-
-                    @Override
-                    public void resultHandler(Context context, int positionInGrid) {
-
-                    }
-                }
-        ));
-
-        tiles.add(new MultipleMarkersInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_religious_meeting_points),
@@ -644,14 +719,15 @@ public class InformationCardsData {
                         getString(R.string.preference_key_religious_meeting_points),
                         getString(R.string.zero)
                 ),
+                R.drawable.heaven50,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MultipleMarkersInformationCard tile =
-                                (MultipleMarkersInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
                         if(!tile.hasMarkers()) {
@@ -664,36 +740,67 @@ public class InformationCardsData {
                         );
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_coordinates),
-                                ((MultipleMarkersInformationCard)
+                                ((LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid)).getMarkers(getInt(R.integer.max_maps_activity_markers))
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -758,7 +865,7 @@ public class InformationCardsData {
                                                         }
                                                     }
 
-                                                    MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                    LandmarksInformationCard tile = (LandmarksInformationCard)activity.data.getTile(positionInGrid);
                                                     tile.setNearestMarkers(religiousMeetingPointsNearby);
                                                     String value = Integer.toString(list.size());
                                                     tile.setValue(value);
@@ -781,7 +888,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MapMarkerInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_farm),
@@ -790,58 +897,90 @@ public class InformationCardsData {
                         getString(R.string.preference_key_local_farms),
                         getString(R.string.not_available)
                 ),
+                R.drawable.farm48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MapMarkerInformationCard tile =
-                                (MapMarkerInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
-                        if(!tile.hasMarker()) {
+                        if(!tile.hasMarkers()) {
                             return;
                         }
-                        Coordinates coordinates =
-                                ((MapMarkerInformationCard)
+                        MapMarkerNode[] coordinates =
+                                ((LandmarksInformationCard)
                                         ((MainActivity)context).data.getTile(positionInGrid)
-                                ).getMarker().getCoordinates();
-                        Intent intent = new Intent(context, RouteActivity.class);
+                                ).getMarkers(1);
+                        Intent intent = new Intent(context, MapsActivity.class);
                         intent.putExtra(getString(
                                         R.string.intent_extra_key_title),
                                 activity.data.getTile(positionInGrid).getTitle()
                         );
                         intent.putExtra(
-                                getString(R.string.intent_extra_key_destination), coordinates
+                                getString(R.string.intent_extra_key_coordinates), coordinates
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -888,7 +1027,7 @@ public class InformationCardsData {
                                             @Override
                                             public void onPostExecute(Context context, String result) {
                                                 MainActivity activity = (MainActivity) context;
-                                                MapMarkerInformationCard tile = (MapMarkerInformationCard) activity.data.getTile(positionInGrid);
+                                                LandmarksInformationCard tile = (LandmarksInformationCard) activity.data.getTile(positionInGrid);
                                                 ArrayList<MapMarker> list;
                                                 MapMarkerNode nearestFarmWrapper = null;
 
@@ -911,7 +1050,9 @@ public class InformationCardsData {
                                                         }
                                                     }
 
-                                                    tile.setMarker(nearestFarmWrapper.getMarker());
+                                                    OrderedMapMarkerList markers = new OrderedMapMarkerList();
+                                                    markers.add(nearestFarmWrapper);
+                                                    tile.setNearestMarkers(markers);
                                                     String value = String.format("%.2f", minDistance);
                                                     tile.setValue(value);
                                                     SharedPreferences.Editor editor = activity.prefs.edit();
@@ -933,7 +1074,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MultipleMarkersInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_bike_spots),
@@ -942,14 +1083,15 @@ public class InformationCardsData {
                         getString(R.string.preference_key_bike_spots),
                         getString(R.string.zero)
                 ),
+                R.drawable.biking48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MultipleMarkersInformationCard tile =
-                                (MultipleMarkersInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
                         if(!tile.hasMarkers()) {
@@ -962,36 +1104,67 @@ public class InformationCardsData {
                         );
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_coordinates),
-                                ((MultipleMarkersInformationCard)
+                                ((LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid)).getMarkers(getInt(R.integer.max_maps_activity_markers))
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -1037,8 +1210,8 @@ public class InformationCardsData {
                                             @Override
                                             public void onPostExecute(Context context, String result) {
                                                 MainActivity activity = (MainActivity)context;
-                                                MultipleMarkersInformationCard tile =
-                                                        (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                LandmarksInformationCard tile =
+                                                        (LandmarksInformationCard)activity.data.getTile(positionInGrid);
                                                 OrderedMapMarkerList bikeSpotsNearby = new OrderedMapMarkerList();
                                                 try {
                                                     JSONArray bs = new JSONObject(result).getJSONArray("parkeerlocaties");
@@ -1076,7 +1249,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MapMarkerInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_gp),
@@ -1085,58 +1258,92 @@ public class InformationCardsData {
                         getString(R.string.preference_key_general_practitioners),
                         getString(R.string.not_available)
                 ),
+                R.drawable.stethoscope48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MapMarkerInformationCard tile =
-                                (MapMarkerInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
-                        if(!tile.hasMarker()) {
+                        if(!tile.hasMarkers()) {
                             return;
                         }
-                        Coordinates coordinates =
-                                ((MapMarkerInformationCard)
+                        MapMarkerNode[] coordinates =
+                                ((LandmarksInformationCard)
                                         ((MainActivity)context).data.getTile(positionInGrid)
-                                ).getMarker().getCoordinates();
-                        Intent intent = new Intent(context, RouteActivity.class);
+                                ).getMarkers(1);
+                        Intent intent = new Intent(context, MapsActivity.class);
                         intent.putExtra(getString(
                                         R.string.intent_extra_key_title),
                                 activity.data.getTile(positionInGrid).getTitle()
                         );
                         intent.putExtra(
-                                getString(R.string.intent_extra_key_destination), coordinates
+                                getString(R.string.intent_extra_key_coordinates), coordinates
                         );
                         intent.putExtra(getString(R.string.intent_extra_key_request_code),
                                 MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -1183,8 +1390,8 @@ public class InformationCardsData {
                                             @Override
                                             public void onPostExecute(Context context, String result) {
                                                 MainActivity activity = (MainActivity)context;
-                                                MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
-                                                MapMarker nearestGeneralPractitioner = null;
+                                                LandmarksInformationCard tile = (LandmarksInformationCard)activity.data.getTile(positionInGrid);
+                                                MapMarkerNode nearestGeneralPractitioner = null;
 
                                                 try {
                                                     JSONArray generalPractitioners = new JSONObject(result).getJSONArray("features");
@@ -1203,11 +1410,13 @@ public class InformationCardsData {
 
                                                         if (distance < minDistance) {
                                                             minDistance = distance;
-                                                            nearestGeneralPractitioner = new MapMarker(label, coords);
+                                                            nearestGeneralPractitioner = new MapMarkerNode(new MapMarker(label, coords), origin);
                                                         }
                                                     }
 
-                                                    tile.setMarker(nearestGeneralPractitioner);
+                                                    OrderedMapMarkerList markers = new OrderedMapMarkerList();
+                                                    markers.add(nearestGeneralPractitioner);
+                                                    tile.setNearestMarkers(markers);
                                                     String value = String.format(String.format("%.2f", minDistance));
                                                     tile.setValue(value);
                                                     SharedPreferences.Editor editor = activity.prefs.edit();
@@ -1237,6 +1446,7 @@ public class InformationCardsData {
                         getString(R.string.preference_key_population),
                         getString(R.string.not_available)
                 ),
+                R.drawable.gender48,
                 new InformationCardStrategy() {
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
@@ -1292,6 +1502,7 @@ public class InformationCardsData {
                         getString(R.string.preference_key_sound_level),
                         getString(R.string.zero)
                 ),
+                R.drawable.horn48,
                 new InformationCardStrategy() {
                     MainActivity activity = (MainActivity)context;
 
@@ -1361,7 +1572,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MapMarkerInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_glass_container),
@@ -1370,58 +1581,90 @@ public class InformationCardsData {
                         getString(R.string.preference_key_trash_containers),
                         getString(R.string.not_available)
                 ),
+                R.drawable.trash48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MapMarkerInformationCard tile =
-                                (MapMarkerInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
-                        if(!tile.hasMarker()) {
+                        if(!tile.hasMarkers()) {
                             return;
                         }
-                        Coordinates coordinates =
-                                ((MapMarkerInformationCard)
+                        MapMarkerNode[] coordinates =
+                                ((LandmarksInformationCard)
                                         ((MainActivity)context).data.getTile(positionInGrid)
-                                ).getMarker().getCoordinates();
-                        Intent intent = new Intent(context, RouteActivity.class);
+                                ).getMarkers(1);
+                        Intent intent = new Intent(context, MapsActivity.class);
                         intent.putExtra(getString(
                                         R.string.intent_extra_key_title),
                                 activity.data.getTile(positionInGrid).getTitle()
                         );
                         intent.putExtra(
-                                getString(R.string.intent_extra_key_destination), coordinates
+                                getString(R.string.intent_extra_key_coordinates), coordinates
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -1468,8 +1711,8 @@ public class InformationCardsData {
                                             @Override
                                             public void onPostExecute(Context context, String result) {
                                                 MainActivity activity = (MainActivity)context;
-                                                MapMarkerInformationCard tile = (MapMarkerInformationCard)activity.data.getTile(positionInGrid);
-                                                MapMarker nearestGlassContainer = null;
+                                                LandmarksInformationCard tile = (LandmarksInformationCard)activity.data.getTile(positionInGrid);
+                                                MapMarkerNode nearestGlassContainer = null;
 
                                                 try {
                                                     JSONArray trashContainers = (new JSONObject(result)).getJSONArray("features");
@@ -1489,12 +1732,14 @@ public class InformationCardsData {
 
                                                             if (distance < minDistance) {
                                                                 minDistance = distance;
-                                                                nearestGlassContainer = new MapMarker(label, coordinates);
+                                                                nearestGlassContainer = new MapMarkerNode(new MapMarker(label, coordinates), origin);
                                                             }
                                                         }
                                                     }
 
-                                                    tile.setMarker(nearestGlassContainer);
+                                                    OrderedMapMarkerList markers = new OrderedMapMarkerList();
+                                                    markers.add(nearestGlassContainer);
+                                                    tile.setNearestMarkers(markers);
                                                     String value = String.format("%.2f", minDistance);
                                                     tile.setValue(value);
                                                     SharedPreferences.Editor editor = activity.prefs.edit();
@@ -1516,7 +1761,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MultipleMarkersInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_ecopassages),
@@ -1525,14 +1770,15 @@ public class InformationCardsData {
                         getString(R.string.preference_key_ecopassages),
                         getString(R.string.zero)
                 ),
+                R.drawable.bridge48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MultipleMarkersInformationCard tile =
-                                (MultipleMarkersInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
                         if(!tile.hasMarkers()) {
@@ -1545,36 +1791,68 @@ public class InformationCardsData {
                         );
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_coordinates),
-                                ((MultipleMarkersInformationCard)
+                                ((LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid)).getMarkers(getInt(R.integer.max_maps_activity_markers))
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -1621,7 +1899,7 @@ public class InformationCardsData {
                                             @Override
                                             public void onPostExecute(Context context, String result) {
                                                 MainActivity activity = (MainActivity)context;
-                                                MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                LandmarksInformationCard tile = (LandmarksInformationCard)activity.data.getTile(positionInGrid);
                                                 ArrayList<MapMarker> list;
                                                 OrderedMapMarkerList ecopassagesNearby = new OrderedMapMarkerList();
 
@@ -1662,7 +1940,7 @@ public class InformationCardsData {
                 }
         ));
 
-        tiles.add(new MultipleMarkersInformationCard(
+        tiles.add(new LandmarksInformationCard(
                 tiles.size(),
                 context,
                 getString(R.string.activity_title_monumental_trees),
@@ -1671,14 +1949,15 @@ public class InformationCardsData {
                         getString(R.string.preference_key_monumental_trees),
                         getString(R.string.zero)
                 ),
+                R.drawable.decidioustree48,
                 new InformationCardStrategy() {
                     Coordinates origin = new Coordinates();
 
                     @Override
                     public void onTileClickHandler(Context context, int positionInGrid) {
                         MainActivity activity = (MainActivity)context;
-                        MultipleMarkersInformationCard tile =
-                                (MultipleMarkersInformationCard)
+                        LandmarksInformationCard tile =
+                                (LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid);
 
                         if(!tile.hasMarkers()) {
@@ -1692,36 +1971,67 @@ public class InformationCardsData {
                         );
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_coordinates),
-                                ((MultipleMarkersInformationCard)
+                                ((LandmarksInformationCard)
                                         activity.data.getTile(positionInGrid)).getMarkers(getInt(R.integer.max_maps_activity_markers))
                         );
-                        intent.putExtra(getString(R.string.intent_extra_key_request_code),
-                                MainActivity.REQUEST_CODE_LOCATION_SENSOR);
-                        Intent locationConfigIntent = null;
+                        List<Intent> sensorConfigIntents = new ArrayList<Intent>();
                         try {
-                            locationConfigIntent = ExpressionManager
+                            Intent sensorConfigIntent = ExpressionManager
                                     .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
                                     .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_latitude_expression),
+                                            getString(R.string.latitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_latitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LATITUDE_SENSOR
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.latitude_menu_item_title)
+                            );
+
+                            sensorConfigIntents.add(sensorConfigIntent);
+
+                            sensorConfigIntent = ExpressionManager
+                                    .getSensor(context, MainActivity.LOCATION_SENSOR_NAME)
+                                    .getConfigurationIntent();
+                            sensorConfigIntent.putExtra(
+                                    "expression",
+                                    activity.prefs.getString(
+                                            getString(R.string.preference_key_longitude_expression),
+                                            getString(R.string.longitude_expression)
+                                    )
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_stored_preference_key),
+                                    getString(R.string.preference_key_longitude_expression)
+                            );
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_request_code),
+                                    MainActivity.REQUEST_CODE_LONGITUDE_SENSOR
+                            );
+
+                            sensorConfigIntent.putExtra(
+                                    getString(R.string.intent_extra_key_menu_item_title),
+                                    getString(R.string.longitude_menu_item_title)
+                            );
+                            sensorConfigIntents.add(sensorConfigIntent);
                         } catch (SwanException e) {
                             e.printStackTrace();
                         }
-                        locationConfigIntent.putExtra(
-                                "latitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_latitude_expression),
-                                        getString(R.string.latitude_expression)
-                                )
-                        );
-                        locationConfigIntent.putExtra(
-                                "longitude_expression",
-                                activity.prefs.getString(
-                                        getString(R.string.preference_key_longitude_expression),
-                                        getString(R.string.longitude_expression)
-                                )
-                        );
+
                         intent.putExtra(
                                 getString(R.string.intent_extra_key_sensor_config_intent),
-                                locationConfigIntent
+                                (Serializable)sensorConfigIntents
                         );
                         activity.startActivity(intent);
                     }
@@ -1768,7 +2078,7 @@ public class InformationCardsData {
                                             @Override
                                             public void onPostExecute(Context context, String result) {
                                                 MainActivity activity = (MainActivity)context;
-                                                MultipleMarkersInformationCard tile = (MultipleMarkersInformationCard)activity.data.getTile(positionInGrid);
+                                                LandmarksInformationCard tile = (LandmarksInformationCard)activity.data.getTile(positionInGrid);
                                                 OrderedMapMarkerList treesNearby = new OrderedMapMarkerList();
 
                                                 try {
