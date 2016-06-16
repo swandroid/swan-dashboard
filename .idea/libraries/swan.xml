@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="swan">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/swan.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

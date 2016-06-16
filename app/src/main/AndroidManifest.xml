@@ -25,9 +25,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/api_key" />
+        <!--<meta-data-->
+            <!--android:name="com.google.android.geo.API_KEY"-->
+            <!--android:value="@string/api_key" />-->
 
         <!--<receiver android:name="interdroid.swan.engine.EvaluationEngineReceiver" >-->
             <!--<intent-filter>-->
