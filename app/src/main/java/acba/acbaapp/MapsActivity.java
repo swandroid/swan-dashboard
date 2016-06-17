@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
@@ -38,6 +39,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import swan.dashboard.R;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -180,7 +183,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onActivityResult(requestCode, resultCode, data);
 
         if(resultCode == RESULT_OK) {
-            SharedPreferences prefs = getSharedPreferences(MainActivity.PREFS_NAME, 0);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor editor = prefs.edit();
 
             editor.putString(
@@ -188,7 +191,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     data.getStringExtra("expression")
             );
 
-            editor.commit();
+            editor.apply();
         }
     }
 

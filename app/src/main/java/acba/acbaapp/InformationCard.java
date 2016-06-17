@@ -3,50 +3,21 @@ package acba.acbaapp;
 import android.content.Context;
 
 /**
- * Created by Alex on 24-May-16.
- */
-
-/**
  * Base class holding information specific to an information card
  */
 public class InformationCard {
-    private Context context;
-    private String title;
-    private String descriptionText;
-    private String valueText;
-    private InformationCardStrategy strategy;
-    private int positionInGrid;
-    private int imageResourceId;
+    protected Context context;
+    protected String title;
+    protected String descriptionText;
+    protected String valueText;
+    protected int tileType;
+    protected InformationCardStrategy strategy;
+    protected int positionInGrid;
+    protected int imageResourceId;
 
-    /**
-     *
-     * @param positionInGrid The position of the information card in the GridView.
-     *                       Should be unique per instance
-     * @param context
-     * @param title The title of the activity which should open and offer more details
-     *              about the information presented by the respectiv information card
-     * @param description String containing the text describing the information
-     *                    presented by the information card
-     * @param value The value of the information card
-     * @param strategy Instance of {@link InformationCardStrategy} defining actions
-     *                 to perform when processing new values of the information card
-     *                 and when the card is clicked
-     */
-    public InformationCard(
-            int positionInGrid,
-            Context context,
-            String title,
-            String description,
-            String value,
-            int imageResourceId,
-            InformationCardStrategy strategy) {
+    public InformationCard(final int positionInGrid, final Context context){
         this.positionInGrid = positionInGrid;
         this.context = context;
-        this.title = title;
-        this.descriptionText = description;
-        this.valueText = value;
-        this.imageResourceId = imageResourceId;
-        this.strategy = strategy;
     }
 
     public String getTitle() {
@@ -65,6 +36,10 @@ public class InformationCard {
 
     public void setValue(String value) {
         this.valueText = value;
+    }
+
+    public int getTileType() {
+        return tileType;
     }
 
     public void process() {

@@ -2,6 +2,7 @@ package acba.acbaapp;
 
 import android.content.Context;
 import android.location.Location;
+import android.preference.PreferenceManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +16,8 @@ import interdroid.swan.swansong.ExpressionFactory;
 import interdroid.swan.swansong.ExpressionParseException;
 import interdroid.swan.swansong.TimestampedValue;
 import interdroid.swan.swansong.ValueExpression;
+import swan.dashboard.DashboardActivity;
+import swan.dashboard.R;
 
 /**
  * Created by Alex on 24-May-16.
@@ -68,7 +71,7 @@ public class ValueExpressionRegistrar {
                         context,
                         String.valueOf(sensorId),
                         (ValueExpression) ExpressionFactory.parse(
-                                getExpression((MainActivity) context, sensorId)
+                                getExpression((DashboardActivity) context, sensorId)
                         ),
                         new ValueExpressionListener() {
                             @Override
@@ -100,7 +103,7 @@ public class ValueExpressionRegistrar {
                         context,
                         String.valueOf(sensorId),
                         (ValueExpression) ExpressionFactory.parse(
-                                getExpression((MainActivity) context, sensorId)
+                                getExpression((DashboardActivity) context, sensorId)
                         ),
                         new ValueExpressionListener() {
                             @Override
@@ -123,36 +126,36 @@ public class ValueExpressionRegistrar {
         handlers = new HashMap<>();
     }
 
-    private String getExpression(MainActivity activity, int sensorId) {
+    private String getExpression(DashboardActivity activity, int sensorId) {
         String preferenceKey, expression;
 
         switch(sensorId) {
-            case MainActivity.REQUEST_CODE_SCREEN_SENSOR: {
+            case DashboardActivity.REQUEST_CODE_SCREEN_SENSOR: {
                 expression = activity.getString(R.string.screen_expression);
                 preferenceKey = activity.getString(R.string.preference_key_screen_expression);
                 break;
             }
-            case MainActivity.REQUEST_CODE_WIFI_SENSOR: {
+            case DashboardActivity.REQUEST_CODE_WIFI_SENSOR: {
                 expression = activity.getString(R.string.wifi_expression);
                 preferenceKey = activity.getString(R.string.preference_key_wifi_expression);
                 break;
             }
-            case MainActivity.REQUEST_CODE_STEP_COUNTER_SENSOR: {
+            case DashboardActivity.REQUEST_CODE_STEP_COUNTER_SENSOR: {
                 expression = activity.getString(R.string.step_counter_expression);
                 preferenceKey = activity.getString(R.string.preference_key_step_counter_expression);
                 break;
             }
-            case MainActivity.REQUEST_CODE_SOUND_SENSOR: {
+            case DashboardActivity.REQUEST_CODE_SOUND_SENSOR: {
                 expression = activity.getString(R.string.sound_expression);
                 preferenceKey = activity.getString(R.string.preference_key_sound_expression);
                 break;
             }
-            case MainActivity.REQUEST_CODE_LATITUDE_SENSOR: {
+            case DashboardActivity.REQUEST_CODE_LATITUDE_SENSOR: {
                 expression = activity.getString(R.string.latitude_expression);
                 preferenceKey = activity.getString(R.string.preference_key_latitude_expression);
                 break;
             }
-            case MainActivity.REQUEST_CODE_LONGITUDE_SENSOR: {
+            case DashboardActivity.REQUEST_CODE_LONGITUDE_SENSOR: {
                 expression = activity.getString(R.string.longitude_expression);
                 preferenceKey = activity.getString(R.string.preference_key_longitude_expression);
                 break;
@@ -162,7 +165,7 @@ public class ValueExpressionRegistrar {
             }
         }
 
-        return activity.prefs.getString(
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(
                 preferenceKey,
                 expression
         );

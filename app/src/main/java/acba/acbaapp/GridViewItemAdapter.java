@@ -9,6 +9,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import swan.dashboard.R;
+
 /**
  * Created by Alex on 24-May-16.
  */
@@ -44,7 +46,7 @@ public class GridViewItemAdapter extends BaseAdapter {
         if(convertView == null) {
 
             LayoutInflater inflater = ((Activity)context).getLayoutInflater();
-            convertView = inflater.inflate(R.layout.grid_item, null);
+            convertView = inflater.inflate(R.layout.card_view, null);
             holder = new ViewHolder(convertView);
 
             int screenHeight = ((Activity) context).getWindowManager()
