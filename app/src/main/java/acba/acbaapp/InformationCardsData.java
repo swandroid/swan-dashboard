@@ -22,18 +22,20 @@ import swan.dashboard.sensors.impl.WifiStationsSensor;
  */
 public class InformationCardsData {
     public static final int TILE_TYPE_NORMAL = 0;
-    public static final int TILE_TYPE_GROUP = 1;
+    public static final int TILE_TYPE_GROUP_COUNT = 1;
+    public static final int TILE_TYPE_GROUP_DISTANCE = 2;
 
     private static InformationCardsData instance = null;
     private ArrayList<InformationCard> tiles = null;
 
-    protected InformationCardsData() {
+    protected InformationCardsData(Context context) {
         tiles = new ArrayList<>();
+        initialize(context);
     };
 
-    public static InformationCardsData getInstance() {
+    public static InformationCardsData getInstance(Context context) {
         if(instance == null) {
-            instance = new InformationCardsData();
+            instance = new InformationCardsData(context);
         }
 
         return instance;
@@ -47,7 +49,7 @@ public class InformationCardsData {
         return tiles.get(position);
     }
 
-    public void initialize(final Context context) {
+    private void initialize(final Context context) {
         tiles.add(new ScreenChecksSensor(tiles.size(), context));
         tiles.add(new ParkingSpotsSensor(tiles.size(), context));
         tiles.add(new PopularSongSensor(tiles.size(),context));

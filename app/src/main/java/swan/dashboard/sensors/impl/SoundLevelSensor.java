@@ -73,7 +73,7 @@ public class SoundLevelSensor extends InformationCard {
 
             @Override
             public void resultHandler(final Context context, final int positionInGrid) {
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_SOUND_SENSOR,
                         new SensorResultHandlers() {
                             @Override

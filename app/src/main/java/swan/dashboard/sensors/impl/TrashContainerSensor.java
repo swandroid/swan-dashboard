@@ -18,6 +18,7 @@ import java.util.List;
 
 import acba.acbaapp.Coordinates;
 import acba.acbaapp.InformationCardStrategy;
+import acba.acbaapp.InformationCardsData;
 import acba.acbaapp.LandmarksInformationCard;
 import acba.acbaapp.MapMarker;
 import acba.acbaapp.MapMarkerNode;
@@ -37,6 +38,7 @@ public class TrashContainerSensor extends LandmarksInformationCard {
     public TrashContainerSensor(final int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
+        this.tileType = InformationCardsData.TILE_TYPE_GROUP_DISTANCE;
         this.imageResourceId = R.drawable.trash48;
         this.title = context.getString(R.string.activity_title_glass_container);
         this.descriptionText = context.getString(R.string.trash_deposit);
@@ -127,7 +129,7 @@ public class TrashContainerSensor extends LandmarksInformationCard {
 
             @Override
             public void resultHandler(final Context context, final int positionInGrid) {
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_LATITUDE_SENSOR,
                         new SensorResultHandlers() {
                             @Override
@@ -141,7 +143,7 @@ public class TrashContainerSensor extends LandmarksInformationCard {
                             }
                         }
                 );
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_LONGITUDE_SENSOR,
                         new SensorResultHandlers() {
                             @Override

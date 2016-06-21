@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="phone_checks">Number of phone checks:</string>
-    <string name="parking_spots">Number of free parking spots:</string>
-    <string name="distance_traveled">Number of kilometers traveled:</string>
-    <string name="most_popular_song">Most popular song in Holland:</string>
-    <string name="wifi_stations_seen">Number of WiFi stations seen:</string>
-    <string name="nearest_public_urinal">Distance to nearest public urinal:</string>
-    <string name="product_price_abroad">Euro\'s to pay for a banana in America:</string>
-    <string name="religious_meeting_points">Number of religious meeting points within 5 km:</string>
-    <string name="nearest_farm_selling_milk">Distance to nearest local farm selling milk:</string>
-    <string name="guarded_bike_places">Number of guarded bike places within 5 km:</string>
-    <string name="nearest_general_practitioner">Distance to nearest GP:</string>
-    <string name="population">Population of The Netherlands:</string>
-    <string name="sound">Sound level recorded at this moment:</string>
-    <string name="trash_deposit">Distance to nearest trash deposit for glass:</string>
-    <string name="ecopassages">Ecopassages within 5 km:</string>
-    <string name="monumental_trees">Monumental trees within 5 km:</string>
+    <string name="phone_checks">Phone checks</string>
+    <string name="parking_spots">Free parking spots</string>
+    <string name="distance_traveled">Kilometers traveled</string>
+    <string name="most_popular_song">Most popular song in Holland</string>
+    <string name="wifi_stations_seen">WiFi stations seen</string>
+    <string name="nearest_public_urinal">Public urinal</string>
+    <!--<string name="product_price_abroad">Euro\'s to pay for a banana in America:</string>-->
+    <string name="religious_meeting_points">Religious meeting points within 5 km</string>
+    <string name="nearest_farm_selling_milk">Local farm selling milk</string>
+    <string name="guarded_bike_places">Guarded bike places within 5 km</string>
+    <string name="nearest_general_practitioner">GP</string>
+    <string name="population">Population of The Netherlands</string>
+    <string name="sound">Sound level recorded at this moment</string>
+    <string name="trash_deposit">Trash deposit for glass</string>
+    <string name="ecopassages">Ecopassages within 5 km</string>
+    <string name="monumental_trees">Monumental trees within 5 km</string>
 
     <string name="zero">0</string>
     <string name="not_available">N/A</string>

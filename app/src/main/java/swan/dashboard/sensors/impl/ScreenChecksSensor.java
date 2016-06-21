@@ -34,7 +34,7 @@ public class ScreenChecksSensor extends InformationCard {
                 context.getString(R.string.zero)
         );
         this.imageResourceId = R.drawable.android52;
-        this.tileType = InformationCardsData.TILE_TYPE_GROUP;
+        this.tileType = InformationCardsData.TILE_TYPE_GROUP_COUNT;
         this.strategy = new InformationCardStrategy() {
 
             @Override
@@ -70,7 +70,7 @@ public class ScreenChecksSensor extends InformationCard {
 
             @Override
             public void resultHandler(final Context context, final int positionInGrid) {
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_SCREEN_SENSOR,
                         new SensorResultHandlers() {
                             DashboardActivity activity = (DashboardActivity) context;

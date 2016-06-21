@@ -126,7 +126,7 @@ public class MonumentalTreesSensor extends LandmarksInformationCard {
 
             @Override
             public void resultHandler(final Context context, final int positionInGrid) {
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_LATITUDE_SENSOR,
                         new SensorResultHandlers() {
                             @Override
@@ -140,7 +140,7 @@ public class MonumentalTreesSensor extends LandmarksInformationCard {
                             }
                         }
                 );
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_LONGITUDE_SENSOR,
                         new SensorResultHandlers() {
                             @Override

@@ -4,23 +4,31 @@ import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
+
+import java.util.ArrayList;
+import java.util.List;
+
+import acba.acbaapp.InformationCard;
 import acba.acbaapp.InformationCardsData;
 import acba.acbaapp.ValueExpressionRegistrar;
 
 public class DashboardActivity extends AppCompatActivity {
+
+    LinearLayout groupDistance;
+    LinearLayout groupCount;
 
     public SensorsAdapter adapter;
     public static final int REQUEST_CODE_SCREEN_SENSOR = 667,
@@ -38,7 +46,7 @@ public class DashboardActivity extends AppCompatActivity {
         LOCATION_SENSOR_NAME = "location";
 
     private DrawerLayout mDrawerLayout;
-    private LinearLayout mList;
+    private List<InformationCard> defaultCards;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,8 +80,10 @@ public class DashboardActivity extends AppCompatActivity {
 
         CollapsingToolbarLayout collapsingToolbar =
                 (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        collapsingToolbar.setTitle("SWAN");
+        collapsingToolbar.setTitle("SWAN Sensors");
 
+        groupCount = (LinearLayout) findViewById(R.id.scroll_view_group1);
+        groupDistance = (LinearLayout) findViewById(R.id.scroll_view_group2);
         initialize();
     }
 
@@ -90,25 +100,50 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     public void initialize() {
-        ValueExpressionRegistrar registrar = ValueExpressionRegistrar.getInstance();
-        registrar.initialize(this);
-        InformationCardsData.getInstance().initialize(this);
-        initializeGridView();
 
-        for(int i=0; i<InformationCardsData.getInstance().size(); i++) {
-            InformationCardsData.getInstance().getTile(i).process();
+        defaultCards = new ArrayList<>();
+        for(int i=0; i<InformationCardsData.getInstance(this).size(); i++) {
+            InformationCard card = InformationCardsData.getInstance(this).getTile(i);
+            switch (card.getTileType()) {
+                case InformationCardsData.TILE_TYPE_GROUP_COUNT:
+                    View itemView = LayoutInflater.from(this).inflate(R.layout.card_view_header, groupCount, false);
+                    loadCard(itemView, card);
+                    groupCount.addView(itemView);
+                    break;
+                case InformationCardsData.TILE_TYPE_GROUP_DISTANCE:
+                    itemView = LayoutInflater.from(this).inflate(R.layout.card_view_header, groupDistance, false);
+                    loadCard(itemView, card);
+                    groupDistance.addView(itemView);
+                    break;
+                case InformationCardsData.TILE_TYPE_NORMAL:
+                    defaultCards.add(card);
+                    break;
+            }
+            card.process();
         }
 
-        ValueExpressionRegistrar.getInstance().start();
+        initializeGridView();
+        ValueExpressionRegistrar.getInstance(this).start();
     }
 
     public void initializeGridView() {
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        adapter = new SensorsAdapter(this, InformationCardsData.getInstance());
+        adapter = new SensorsAdapter(this, defaultCards);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
-        recyclerView.setLayoutManager(mLayoutManager);
         if (recyclerView != null) {
+            recyclerView.setLayoutManager(mLayoutManager);
             recyclerView.setAdapter(adapter);
         }
     }
+
+    public void loadCard(View view, InformationCard card) {
+        TextView description = (TextView) view.findViewById(R.id.itemDescriptionTextView);
+        TextView value = (TextView) view.findViewById(R.id.itemValueTextView);
+        ImageView image = (ImageView) view.findViewById(R.id.imageView);
+
+        description.setText(card.getDescription());
+        value.setText(card.getValue());
+        image.setImageResource(card.getImageResourceId());
+    }
+
 }

@@ -26,7 +26,7 @@ public class WifiStationsSensor extends InformationCard {
     public WifiStationsSensor(int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.tileType = InformationCardsData.TILE_TYPE_GROUP;
+        this.tileType = InformationCardsData.TILE_TYPE_GROUP_COUNT;
         this.positionInGrid = positionInGrid;
         this.context = context;
         this.title = context.getString(R.string.activity_title_wifi_stations_seen);
@@ -72,7 +72,7 @@ public class WifiStationsSensor extends InformationCard {
 
             @Override
             public void resultHandler(final Context context, final int positionInGrid) {
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_WIFI_SENSOR,
                         new SensorResultHandlers() {
                             DashboardActivity activity = (DashboardActivity)context;

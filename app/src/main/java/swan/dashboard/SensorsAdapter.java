@@ -10,13 +10,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.List;
+
 import acba.acbaapp.InformationCard;
-import acba.acbaapp.InformationCardsData;
 
 public class SensorsAdapter extends RecyclerView.Adapter<SensorsAdapter.MyViewHolder> {
 
     private Context context;
-    private InformationCardsData data;
+    private List<InformationCard> data;
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView description, value;
@@ -31,36 +32,30 @@ public class SensorsAdapter extends RecyclerView.Adapter<SensorsAdapter.MyViewHo
     }
 
 
-    public SensorsAdapter(Context context, InformationCardsData data) {
+    public SensorsAdapter(Context context, List<InformationCard> data) {
         this.context = context;
         this.data = data;
     }
 
+
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        switch (viewType) {
-            case InformationCardsData.TILE_TYPE_NORMAL:
-                View itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.card_view, parent, false);
-                return new MyViewHolder(itemView);
-
-            case InformationCardsData.TILE_TYPE_GROUP:
-                itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.card_view_header, parent, false);
-                return new MyViewHolder(itemView);
-
-            default:
-                Log.e(getClass().getSimpleName(), "Error: unknown tile type");
-        }
-        return null;
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view, parent, false);
+        return new MyViewHolder(itemView);
     }
 
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
-        InformationCard tile = data.getTile(position);
+    public void onBindViewHolder(MyViewHolder holder, final int position) {
+        final InformationCard tile = data.get(position);
         holder.description.setText(tile.getDescription());
         holder.value.setText(tile.getValue());
         holder.image.setImageResource(tile.getImageResourceId());
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tile.executeOnClickHandler();
+            }
+        });
     }
 
     @Override

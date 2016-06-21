@@ -37,18 +37,18 @@ public class ValueExpressionRegistrar {
      */
     private Map<Integer,ArrayList<SensorResultHandlers>> handlers;
 
-    public static ValueExpressionRegistrar getInstance() {
+    private ValueExpressionRegistrar(Context context) {
+        this.context = context;
+        handlers = new HashMap<>();
+    }
+
+    public static ValueExpressionRegistrar getInstance(Context context) {
         if(instance == null) {
-            instance = new ValueExpressionRegistrar();
+            instance = new ValueExpressionRegistrar(context);
         }
 
         return instance;
     }
-
-    public void initialize(Context context) {
-        this.context = context;
-    }
-
     /**
      * Adds a {@link SensorResultHandlers} implementation for the SWAN sensor of the specified
      * <code>id</code>
@@ -120,10 +120,6 @@ public class ValueExpressionRegistrar {
                 e.printStackTrace();
             }
         }
-    }
-
-    private ValueExpressionRegistrar() {
-        handlers = new HashMap<>();
     }
 
     private String getExpression(DashboardActivity activity, int sensorId) {

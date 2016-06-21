@@ -9,7 +9,7 @@ public class LandmarksInformationCard extends InformationCard {
         super(positionInGrid, context);
 
         nearestMarkers = new OrderedMapMarkerList();
-        tileType = InformationCardsData.TILE_TYPE_GROUP;
+        tileType = InformationCardsData.TILE_TYPE_GROUP_COUNT;
     }
 
     public MapMarkerNode[] getMarkers(int n) {

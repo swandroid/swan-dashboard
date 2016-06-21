@@ -17,6 +17,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import acba.acbaapp.Coordinates;
 import acba.acbaapp.InformationCardStrategy;
+import acba.acbaapp.InformationCardsData;
 import acba.acbaapp.LandmarkXMLHandler;
 import acba.acbaapp.LandmarksInformationCard;
 import acba.acbaapp.MapMarker;
@@ -37,6 +38,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
     public MilkFarmSensor(int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
+        this.tileType = InformationCardsData.TILE_TYPE_GROUP_DISTANCE;
         this.imageResourceId = R.drawable.farm48;
         this.title = context.getString(R.string.activity_title_farm);
         this.descriptionText = context.getString(R.string.nearest_farm_selling_milk);
@@ -126,7 +128,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
 
             @Override
             public void resultHandler(final Context context, final int positionInGrid) {
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_LATITUDE_SENSOR,
                         new SensorResultHandlers() {
                             @Override
@@ -140,7 +142,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
                             }
                         }
                 );
-                ValueExpressionRegistrar.getInstance().register(
+                ValueExpressionRegistrar.getInstance(context).register(
                         DashboardActivity.REQUEST_CODE_LONGITUDE_SENSOR,
                         new SensorResultHandlers() {
                             @Override
