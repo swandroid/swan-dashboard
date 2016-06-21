@@ -30,7 +30,7 @@ public class PopularSongSensor extends InformationCard {
         this.tileType = InformationCardsData.TILE_TYPE_NORMAL;
         this.title = context.getString(R.string.activity_title_most_popular_song);
         this.descriptionText = context.getString(R.string.most_popular_song);
-        this.imageResourceId = R.drawable.music48;
+        this.imageResourceId = R.drawable.song;
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(
                 context.getString(R.string.preference_key_song),
                 context.getString(R.string.not_available)

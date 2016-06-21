@@ -33,7 +33,7 @@ public class ScreenChecksSensor extends InformationCard {
                 context.getString(R.string.preference_key_screen_checks),
                 context.getString(R.string.zero)
         );
-        this.imageResourceId = R.drawable.android52;
+        this.imageResourceId = R.drawable.phone2;
         this.tileType = InformationCardsData.TILE_TYPE_GROUP_COUNT;
         this.strategy = new InformationCardStrategy() {
 

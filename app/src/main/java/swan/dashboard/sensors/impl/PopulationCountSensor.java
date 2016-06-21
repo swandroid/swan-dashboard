@@ -22,7 +22,7 @@ public class PopulationCountSensor extends InformationCard {
     public PopulationCountSensor(final int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.imageResourceId = R.drawable.gender48;
+        this.imageResourceId = R.drawable.population;
         this.title = context.getString(R.string.activity_title_population);
         this.descriptionText = context.getString(R.string.population);
         this.tileType = InformationCardsData.TILE_TYPE_NORMAL;

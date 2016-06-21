@@ -11,4 +11,8 @@
         <!--<item name="android:windowDrawsSystemBarBackgrounds">true</item>-->
         <!--<item name="android:statusBarColor">@android:color/transparent</item>-->
     <!--</style>-->
+
+    <style name="CardViewStyle" parent="CardView">
+        <item name="cardElevation">4dp</item>
+    </style>
 </resources>

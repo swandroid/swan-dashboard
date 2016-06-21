@@ -1,5 +1,7 @@
 package swan.dashboard;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -11,6 +13,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -53,21 +57,21 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
+//
         final ActionBar ab = getSupportActionBar();
         if (ab != null) {
             ab.setHomeAsUpIndicator(R.drawable.ic_menu);
             ab.setDisplayHomeAsUpEnabled(true);
         }
 
-//        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-//
-//        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-//        if (navigationView != null) {
-//            setupDrawerContent(navigationView);
-//        }
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        if (navigationView != null) {
+            setupDrawerContent(navigationView);
+        }
 
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
@@ -78,15 +82,41 @@ public class DashboardActivity extends AppCompatActivity {
 //            }
 //        });
 
-        CollapsingToolbarLayout collapsingToolbar =
-                (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        collapsingToolbar.setTitle("SWAN Sensors");
+//        CollapsingToolbarLayout collapsingToolbar =
+//                (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+//        collapsingToolbar.setTitle("SWAN Sensors");
 
         groupCount = (LinearLayout) findViewById(R.id.scroll_view_group1);
         groupDistance = (LinearLayout) findViewById(R.id.scroll_view_group2);
         initialize();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                showInfo();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void showInfo() {
+        String url = "http://www.cs.vu.nl/SWAN/";
+        Uri uri = Uri.parse(url);
+        Intent intent = new Intent();
+        intent.setData(uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
     private void setupDrawerContent(NavigationView navigationView) {
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {

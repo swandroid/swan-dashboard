@@ -39,7 +39,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
         super(positionInGrid, context);
 
         this.tileType = InformationCardsData.TILE_TYPE_GROUP_DISTANCE;
-        this.imageResourceId = R.drawable.farm48;
+        this.imageResourceId = R.drawable.farm1;
         this.title = context.getString(R.string.activity_title_farm);
         this.descriptionText = context.getString(R.string.nearest_farm_selling_milk);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(

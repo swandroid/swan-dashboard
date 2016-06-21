@@ -41,7 +41,7 @@ public class NearestGPSensor extends LandmarksInformationCard {
         super(positionInGrid, context);
 
         this.tileType = InformationCardsData.TILE_TYPE_GROUP_DISTANCE;
-        this.imageResourceId = R.drawable.stethoscope48;
+        this.imageResourceId = R.drawable.doc1;
         this.title = context.getString(R.string.activity_title_gp);
         this.descriptionText = context.getString(R.string.nearest_general_practitioner);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(

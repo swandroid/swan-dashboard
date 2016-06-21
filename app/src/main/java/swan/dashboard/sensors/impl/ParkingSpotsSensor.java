@@ -34,7 +34,7 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
     public ParkingSpotsSensor(int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.imageResourceId = R.drawable.parking50;
+        this.imageResourceId = R.drawable.park;
         this.title = context.getString(R.string.activity_title_parkings);
         this.descriptionText = context.getString(R.string.parking_spots);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(

@@ -22,7 +22,7 @@ public class SoundLevelSensor extends InformationCard {
     public SoundLevelSensor(final int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.imageResourceId = R.drawable.horn48;
+        this.imageResourceId = R.drawable.sound1;
         this.title = context.getString(R.string.activity_title_sound_level);
         this.descriptionText = context.getString(R.string.sound);
         this.tileType = InformationCardsData.TILE_TYPE_NORMAL;

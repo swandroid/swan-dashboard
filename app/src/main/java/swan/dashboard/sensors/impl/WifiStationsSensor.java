@@ -31,7 +31,7 @@ public class WifiStationsSensor extends InformationCard {
         this.context = context;
         this.title = context.getString(R.string.activity_title_wifi_stations_seen);
         this.descriptionText = context.getString(R.string.wifi_stations_seen);
-        this.imageResourceId = R.drawable.wifi48;
+        this.imageResourceId = R.drawable.wifi1;
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(
                 context.getString(R.string.preference_key_wifi_stations),
                 context.getString(R.string.zero)

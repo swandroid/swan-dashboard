@@ -35,7 +35,7 @@ public class MonumentalTreesSensor extends LandmarksInformationCard {
     public MonumentalTreesSensor(final int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.imageResourceId = R.drawable.decidioustree48;
+        this.imageResourceId = R.drawable.tree;
         this.title = context.getString(R.string.activity_title_monumental_trees);
         this.descriptionText = context.getString(R.string.monumental_trees);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(

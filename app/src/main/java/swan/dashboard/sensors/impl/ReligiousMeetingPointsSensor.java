@@ -38,7 +38,7 @@ public class ReligiousMeetingPointsSensor extends LandmarksInformationCard {
     public ReligiousMeetingPointsSensor(final int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.imageResourceId = R.drawable.heaven50;
+        this.imageResourceId = R.drawable.religie1;
         this.title = context.getString(R.string.activity_title_religious_meeting_points);
         this.descriptionText = context.getString(R.string.religious_meeting_points);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(

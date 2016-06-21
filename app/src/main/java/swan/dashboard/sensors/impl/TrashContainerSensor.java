@@ -39,7 +39,7 @@ public class TrashContainerSensor extends LandmarksInformationCard {
         super(positionInGrid, context);
 
         this.tileType = InformationCardsData.TILE_TYPE_GROUP_DISTANCE;
-        this.imageResourceId = R.drawable.trash48;
+        this.imageResourceId = R.drawable.trash;
         this.title = context.getString(R.string.activity_title_glass_container);
         this.descriptionText = context.getString(R.string.trash_deposit);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(

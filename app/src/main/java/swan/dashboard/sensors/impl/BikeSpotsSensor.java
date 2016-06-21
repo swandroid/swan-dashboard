@@ -34,7 +34,7 @@ public class BikeSpotsSensor extends LandmarksInformationCard {
     public BikeSpotsSensor(final int positionInGrid, final Context context) {
         super(positionInGrid, context);
 
-        this.imageResourceId = R.drawable.biking48;
+        this.imageResourceId = R.drawable.bike1;
         this.title = context.getString(R.string.activity_title_bike_spots);
         this.descriptionText = context.getString(R.string.guarded_bike_places);
         this.valueText = PreferenceManager.getDefaultSharedPreferences(context).getString(
