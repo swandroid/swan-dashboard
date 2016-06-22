@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="swan-song">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/app/libs/swan-song.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

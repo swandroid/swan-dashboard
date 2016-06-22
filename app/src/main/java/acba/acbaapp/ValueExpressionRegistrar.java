@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import interdroid.swan.ExpressionManager;
-import interdroid.swan.SensorInfo;
-import interdroid.swan.SwanException;
-import interdroid.swan.ValueExpressionListener;
-import interdroid.swan.swansong.ExpressionFactory;
-import interdroid.swan.swansong.ExpressionParseException;
-import interdroid.swan.swansong.TimestampedValue;
-import interdroid.swan.swansong.ValueExpression;
+import interdroid.swancore.swanmain.ExpressionManager;
+import interdroid.swancore.swanmain.SensorInfo;
+import interdroid.swancore.swanmain.SwanException;
+import interdroid.swancore.swanmain.ValueExpressionListener;
+import interdroid.swancore.swansong.ExpressionFactory;
+import interdroid.swancore.swansong.ExpressionParseException;
+import interdroid.swancore.swansong.TimestampedValue;
+import interdroid.swancore.swansong.ValueExpression;
 import swan.dashboard.DashboardActivity;
 import swan.dashboard.R;
 
@@ -75,10 +75,16 @@ public class ValueExpressionRegistrar {
                         ),
                         new ValueExpressionListener() {
                             @Override
-                            public void onNewValues(String id, TimestampedValue[] newValues) {
-                                for (SensorResultHandlers handler : handlers.get(sensorId)) {
-                                    handler.onNewValues(id, newValues);
-                                }
+                            public void onNewValues(final String id, final TimestampedValue[] newValues) {
+                                new Thread() {
+                                    @Override
+                                    public void run() {
+                                        for (SensorResultHandlers handler : handlers.get(sensorId)) {
+                                            handler.onNewValues(id, newValues);
+                                        }
+                                    }
+                                }.start();
+
                             }
                         }
                 );
