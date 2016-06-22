@@ -2,6 +2,7 @@
 <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
                                             android:layout_width="match_parent"
                                             android:layout_height="match_parent"
+                                            xmlns:app="http://schemas.android.com/apk/res-auto"
                                             android:layout_margin="@dimen/activity_vertical_margin"
                                             android:fitsSystemWindows="true">
 
@@ -21,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/fab_margin"
                 android:fontFamily="sans-serif-medium"
-                android:text="Number of"
+                android:text="Where is the nearest ...? "
                 android:textColor="#000"
                 android:textSize="20sp"/>
 
@@ -30,10 +31,17 @@
                 android:layout_height="wrap_content">
 
                 <LinearLayout
-                    android:id="@+id/scroll_view_group1"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"/>
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/scroll_view_group2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        app:layoutManager="android.support.v7.widget.LinearLayoutManager"/>
+                </LinearLayout>
 
             </HorizontalScrollView>
         </LinearLayout>
@@ -49,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/fab_margin"
                 android:fontFamily="sans-serif-medium"
-                android:text="Distance to nearest "
+                android:text="How many?"
                 android:textColor="#000"
                 android:textSize="20sp"/>
 
@@ -58,19 +66,42 @@
                 android:layout_height="wrap_content">
 
                 <LinearLayout
-                    android:id="@+id/scroll_view_group2"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"/>
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/scroll_view_group1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    app:layoutManager="android.support.v7.widget.LinearLayoutManager"/>
+                </LinearLayout>
 
             </HorizontalScrollView>
         </LinearLayout>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recycler_view"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical"/>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/fab_margin"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/fab_margin"
+                android:fontFamily="sans-serif-medium"
+                android:text="What is the ...? "
+                android:textColor="#000"
+                android:textSize="20sp"/>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical"/>
+        </LinearLayout>
     </LinearLayout>
 
 </android.support.v4.widget.NestedScrollView>

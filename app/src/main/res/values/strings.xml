@@ -71,7 +71,7 @@
     <string name="general_practitioner_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/huisartsen/export/json</string>
     <string name="public_urinal_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/urinoirs_stadsdeel_centrum/export/json</string>
     <string name="population_api_url">http://opendata.cbs.nl/ODataApi/odata/37296ned/TypedDataSet</string>
-    <string name="trash_container_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/afvalcontainers-1/export/json</string>
+    <string name="trash_container_api_url">https://kaart.amsterdam.nl/datasets/datasets-item/t/afvalcontainers/export/json</string>
     <string name="popular_song_url">http://ws.audioscrobbler.com/2.0/?method=geo.gettoptracks&amp;country=netherlands&amp;api_key=9f8c564d4232aaebeb9c4752c63e18d7&amp;limit=1&amp;format=json</string>
 
     <!--INFORMATION CARDS VALUE SHARED PREFERENCE KEYS-->

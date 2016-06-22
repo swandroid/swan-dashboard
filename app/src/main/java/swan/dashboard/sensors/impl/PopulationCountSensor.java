@@ -1,7 +1,6 @@
 package swan.dashboard.sensors.impl;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -9,13 +8,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import acba.acbaapp.InformationCard;
-import acba.acbaapp.InformationCardStrategy;
-import acba.acbaapp.InformationCardsData;
-import acba.acbaapp.RequestManager;
-import acba.acbaapp.RequestManagerHandlers;
-import swan.dashboard.DashboardActivity;
-import swan.dashboard.DetailsActivity;
+import java.text.NumberFormat;
+import java.util.Locale;
+
+import swan.dashboard.sensors.InformationCard;
+import swan.dashboard.sensors.InformationCardStrategy;
+import swan.dashboard.sensors.InformationCardsData;
+import swan.dashboard.services.RequestManager;
+import swan.dashboard.services.RequestManagerHandlers;
+import swan.dashboard.activities.DashboardActivity;
 import swan.dashboard.R;
 
 public class PopulationCountSensor extends InformationCard {
@@ -33,10 +34,10 @@ public class PopulationCountSensor extends InformationCard {
         this.strategy = new InformationCardStrategy() {
             @Override
             public void onTileClickHandler(Context context, int positionInGrid) {
-                Intent intent = new Intent(context, DetailsActivity.class);
-                intent.putExtra(context.getString(R.string.intent_extra_key_title), getTitle());
-                intent.putExtra(context.getString(R.string.intent_extra_key_value), getValue());
-                context.startActivity(intent);
+//                Intent intent = new Intent(context, DetailsActivity.class);
+//                intent.putExtra(context.getString(R.string.intent_extra_key_title), getTitle());
+//                intent.putExtra(context.getString(R.string.intent_extra_key_value), getValue());
+//                context.startActivity(intent);
             }
 
             @Override
@@ -48,13 +49,12 @@ public class PopulationCountSensor extends InformationCard {
                                 new RequestManagerHandlers() {
                                     @Override
                                     public void onPostExecute(Context context, String result) {
-                                        DashboardActivity activity = (DashboardActivity)context;
-//                                        InformationCard tile =  getTile(11);
+                                        final DashboardActivity activity = (DashboardActivity)context;
                                         try {
                                             JSONArray populationByYear = new JSONObject(result).getJSONArray("value");
                                             int population =
                                                     populationByYear.getJSONObject(populationByYear.length() - 1).getInt("TotaleBevolking_1");
-                                            String value = String.format(String.format("%d", population));
+                                            String value = NumberFormat.getNumberInstance(Locale.FRANCE).format(population);
                                             setValue(value);
                                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
                                             editor.putString(
@@ -62,7 +62,13 @@ public class PopulationCountSensor extends InformationCard {
                                                     value
                                             );
                                             editor.apply();
-                                            activity.adapter.notifyDataSetChanged();
+
+//                                            activity.runOnUiThread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    activity.adapter.notifyDataSetChanged();
+//                                                }
+//                                            });
                                         } catch (JSONException e) {
                                             e.printStackTrace();
                                         }

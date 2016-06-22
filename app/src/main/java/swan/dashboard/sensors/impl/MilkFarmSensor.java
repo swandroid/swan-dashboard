@@ -12,26 +12,27 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.xml.parsers.SAXParserFactory;
 
-import acba.acbaapp.Coordinates;
-import acba.acbaapp.InformationCardStrategy;
-import acba.acbaapp.InformationCardsData;
-import acba.acbaapp.LandmarkXMLHandler;
-import acba.acbaapp.LandmarksInformationCard;
-import acba.acbaapp.MapMarker;
-import acba.acbaapp.MapMarkerNode;
-import acba.acbaapp.MapsActivity;
-import acba.acbaapp.OrderedMapMarkerList;
-import acba.acbaapp.RequestManager;
-import acba.acbaapp.RequestManagerHandlers;
-import acba.acbaapp.SensorResultHandlers;
-import acba.acbaapp.ValueExpressionRegistrar;
+import swan.dashboard.models.Coordinates;
+import swan.dashboard.sensors.InformationCardStrategy;
+import swan.dashboard.sensors.InformationCardsData;
+import swan.dashboard.services.LandmarkXMLHandler;
+import swan.dashboard.sensors.LandmarksInformationCard;
+import swan.dashboard.models.MapMarker;
+import swan.dashboard.models.MapMarkerNode;
+import swan.dashboard.activities.MapsActivity;
+import swan.dashboard.models.OrderedMapMarkerList;
+import swan.dashboard.services.RequestManager;
+import swan.dashboard.services.RequestManagerHandlers;
+import swan.dashboard.services.SensorResultHandlers;
+import swan.dashboard.services.ValueExpressionRegistrar;
 import interdroid.swancore.swanmain.ExpressionManager;
 import interdroid.swancore.swanmain.SwanException;
 import interdroid.swancore.swansong.TimestampedValue;
-import swan.dashboard.DashboardActivity;
+import swan.dashboard.activities.DashboardActivity;
 import swan.dashboard.R;
 
 public class MilkFarmSensor extends LandmarksInformationCard {
@@ -167,7 +168,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
                                 new RequestManagerHandlers() {
                                     @Override
                                     public void onPostExecute(Context context, String result) {
-                                        DashboardActivity activity = (DashboardActivity) context;
+                                        final DashboardActivity activity = (DashboardActivity) context;
                                         ArrayList<MapMarker> list;
                                         MapMarkerNode nearestFarmWrapper = null;
 
@@ -193,7 +194,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
                                             OrderedMapMarkerList markers = new OrderedMapMarkerList();
                                             markers.add(nearestFarmWrapper);
                                             setNearestMarkers(markers);
-                                            String value = String.format("%.2f", minDistance);
+                                            String value = String.format(Locale.FRANCE, "%.0f m", minDistance);
                                             setValue(value);
                                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
                                             editor.putString(
@@ -201,7 +202,13 @@ public class MilkFarmSensor extends LandmarksInformationCard {
                                                     value
                                             );
                                             editor.apply();
-                                            activity.adapter.notifyDataSetChanged();
+
+//                                            activity.runOnUiThread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    activity.adapter.notifyDataSetChanged();
+//                                                }
+//                                            });
                                         } catch (Exception e) {
                                             e.printStackTrace();
                                         }

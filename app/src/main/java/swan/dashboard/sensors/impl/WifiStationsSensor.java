@@ -1,20 +1,16 @@
 package swan.dashboard.sensors.impl;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import acba.acbaapp.InformationCard;
-import acba.acbaapp.InformationCardStrategy;
-import acba.acbaapp.InformationCardsData;
-import acba.acbaapp.SensorResultHandlers;
-import acba.acbaapp.ValueExpressionRegistrar;
-import interdroid.swancore.swanmain.ExpressionManager;
-import interdroid.swancore.swanmain.SwanException;
+import swan.dashboard.sensors.InformationCard;
+import swan.dashboard.sensors.InformationCardStrategy;
+import swan.dashboard.sensors.InformationCardsData;
+import swan.dashboard.services.SensorResultHandlers;
+import swan.dashboard.services.ValueExpressionRegistrar;
 import interdroid.swancore.swansong.TimestampedValue;
-import swan.dashboard.DashboardActivity;
-import swan.dashboard.DetailsActivity;
+import swan.dashboard.activities.DashboardActivity;
 import swan.dashboard.R;
 
 public class WifiStationsSensor extends InformationCard {
@@ -41,33 +37,33 @@ public class WifiStationsSensor extends InformationCard {
 
             @Override
             public void onTileClickHandler(Context context, int positionInGrid) {
-                Intent intent = new Intent(context, DetailsActivity.class);
-                intent.putExtra(context.getString(R.string.intent_extra_key_title), getTitle());
-                intent.putExtra(context.getString(R.string.intent_extra_key_value), getValue());
-                intent.putExtra(context.getString(R.string.intent_extra_key_request_code),
-                        DashboardActivity.REQUEST_CODE_WIFI_SENSOR);
-                Intent sensorConfigIntent = null;
-                try {
-                    sensorConfigIntent= ExpressionManager
-                            .getSensor(context, DashboardActivity.WIFI_SENSOR_NAME)
-                            .getConfigurationIntent();
-                } catch (SwanException e) {
-                    e.printStackTrace();
-                }
-                if (sensorConfigIntent != null) {
-                    sensorConfigIntent.putExtra(
-                            "expression",
-                            PreferenceManager.getDefaultSharedPreferences(context).getString(
-                                    context.getString(R.string.preference_key_wifi_expression),
-                                    context.getString(R.string.wifi_expression)
-                            )
-                    );
-                }
-                intent.putExtra(
-                        context.getString(R.string.intent_extra_key_sensor_config_intent),
-                        sensorConfigIntent
-                );
-                context.startActivity(intent);
+//                Intent intent = new Intent(context, DetailsActivity.class);
+//                intent.putExtra(context.getString(R.string.intent_extra_key_title), getTitle());
+//                intent.putExtra(context.getString(R.string.intent_extra_key_value), getValue());
+//                intent.putExtra(context.getString(R.string.intent_extra_key_request_code),
+//                        DashboardActivity.REQUEST_CODE_WIFI_SENSOR);
+//                Intent sensorConfigIntent = null;
+//                try {
+//                    sensorConfigIntent= ExpressionManager
+//                            .getSensor(context, DashboardActivity.WIFI_SENSOR_NAME)
+//                            .getConfigurationIntent();
+//                } catch (SwanException e) {
+//                    e.printStackTrace();
+//                }
+//                if (sensorConfigIntent != null) {
+//                    sensorConfigIntent.putExtra(
+//                            "expression",
+//                            PreferenceManager.getDefaultSharedPreferences(context).getString(
+//                                    context.getString(R.string.preference_key_wifi_expression),
+//                                    context.getString(R.string.wifi_expression)
+//                            )
+//                    );
+//                }
+//                intent.putExtra(
+//                        context.getString(R.string.intent_extra_key_sensor_config_intent),
+//                        sensorConfigIntent
+//                );
+//                context.startActivity(intent);
             }
 
             @Override
@@ -88,7 +84,12 @@ public class WifiStationsSensor extends InformationCard {
                                             value
                                     );
                                     editor.apply();
-                                    activity.adapter.notifyDataSetChanged();
+//                                    activity.runOnUiThread(new Runnable() {
+//                                        @Override
+//                                        public void run() {
+//                                            activity.adapter.notifyDataSetChanged();
+//                                        }
+//                                    });
                                 }
                             }
                         }
