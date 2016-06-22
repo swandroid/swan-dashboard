@@ -24,9 +24,9 @@
 //
 //import java.util.ArrayList;
 //
-//import interdroid.swan.ExpressionManager;
+//import interdroid.swancore.swanmain.ExpressionManager;
 //import interdroid.swan.SensorInfo;
-//import interdroid.swan.SwanException;
+//import interdroid.swancore.swanmain.SwanException;
 //import swan.dashboard.R;
 //
 //public class MainActivity extends Activity {

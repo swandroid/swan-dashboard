@@ -24,9 +24,9 @@ import acba.acbaapp.RequestManager;
 import acba.acbaapp.RequestManagerHandlers;
 import acba.acbaapp.SensorResultHandlers;
 import acba.acbaapp.ValueExpressionRegistrar;
-import interdroid.swan.ExpressionManager;
-import interdroid.swan.SwanException;
-import interdroid.swan.swansong.TimestampedValue;
+import interdroid.swancore.swanmain.ExpressionManager;
+import interdroid.swancore.swanmain.SwanException;
+import interdroid.swancore.swansong.TimestampedValue;
 import swan.dashboard.DashboardActivity;
 import swan.dashboard.R;
 

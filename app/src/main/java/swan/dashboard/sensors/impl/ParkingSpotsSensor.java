@@ -24,9 +24,9 @@ import acba.acbaapp.RequestManager;
 import acba.acbaapp.RequestManagerHandlers;
 import acba.acbaapp.SensorResultHandlers;
 import acba.acbaapp.ValueExpressionRegistrar;
-import interdroid.swan.ExpressionManager;
-import interdroid.swan.SwanException;
-import interdroid.swan.swansong.TimestampedValue;
+import interdroid.swancore.swanmain.ExpressionManager;
+import interdroid.swancore.swanmain.SwanException;
+import interdroid.swancore.swansong.TimestampedValue;
 import swan.dashboard.DashboardActivity;
 import swan.dashboard.R;
 
@@ -46,16 +46,16 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
 
             @Override
             public void onTileClickHandler(Context context, int positionInGrid) {
-                DashboardActivity activity = (DashboardActivity) context;
+                final DashboardActivity activity = (DashboardActivity) context;
 
-                if(!hasMarkers()) {
+                if (!hasMarkers()) {
                     return;
                 }
                 MapMarkerNode[] coordinates = getMarkers(1);
-                Intent intent = new Intent(context, MapsActivity.class);
+                final Intent intent = new Intent(context, MapsActivity.class);
                 intent.putExtra(context.getString(
-                                R.string.intent_extra_key_title),
-                         getTitle()
+                        R.string.intent_extra_key_title),
+                        getTitle()
                 );
                 intent.putExtra(
                         context.getString(R.string.intent_extra_key_coordinates), coordinates
@@ -117,9 +117,14 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
 
                 intent.putExtra(
                         context.getString(R.string.intent_extra_key_sensor_config_intent),
-                        (Serializable)sensorConfigIntents
+                        (Serializable) sensorConfigIntents
                 );
-                activity.startActivity(intent);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        activity.startActivity(intent);
+                    }
+                });
             }
 
             @Override
@@ -129,10 +134,10 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
                         new SensorResultHandlers() {
                             @Override
                             public void onNewValues(String arg0, TimestampedValue[] arg1) {
-                                if(arg1 != null && arg1.length > 0) {
+                                if (arg1 != null && arg1.length > 0) {
                                     origin.setLatitude((double) arg1[0].getValue());
-                                    if(origin.hasLongitude()) {
-                                        processNewLocation(positionInGrid);
+                                    if (origin.hasLongitude()) {
+                                        processNewLocation();
                                     }
                                 }
                             }
@@ -143,10 +148,10 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
                         new SensorResultHandlers() {
                             @Override
                             public void onNewValues(String arg0, TimestampedValue[] arg1) {
-                                if(arg1 != null && arg1.length > 0) {
+                                if (arg1 != null && arg1.length > 0) {
                                     origin.setLongitude((double) arg1[0].getValue());
-                                    if(origin.hasLatitude()) {
-                                        processNewLocation(positionInGrid);
+                                    if (origin.hasLatitude()) {
+                                        processNewLocation();
                                     }
                                 }
                             }
@@ -154,7 +159,7 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
                 );
             }
 
-            private void processNewLocation(final int positionInGrid) {
+            private void processNewLocation() {
                 RequestManager requestManager =
                         new RequestManager(
                                 context,
@@ -193,12 +198,12 @@ public class ParkingSpotsSensor extends LandmarksInformationCard {
                                                         origin.getLongitude()
                                                 );
 
-                                                if(nearestParking == null) {
+                                                if (nearestParking == null) {
                                                     nearestParking = parkingNode;
                                                     freeSpaces =
                                                             data.optInt("FreeSpaceShort") +
                                                                     data.optInt("FreeSpaceLong");
-                                                } else if(
+                                                } else if (
                                                         parkingNode
                                                                 .getDistanceFromOrigin()
                                                                 < nearestParking
