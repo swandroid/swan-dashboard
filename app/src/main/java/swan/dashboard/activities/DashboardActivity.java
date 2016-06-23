@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,13 +25,6 @@ public class DashboardActivity extends AppCompatActivity {
     public static final int VIEW_TYPE_CARD = 0;
     public static final int VIEW_TYPE_CARD_GROUP = 1;
 
-    RecyclerView groupDistance;
-    RecyclerView groupCount;
-
-    public SensorsAdapter adapter;
-    public SensorsAdapter adapter1;
-    public SensorsAdapter adapter2;
-
     public static final int REQUEST_CODE_SCREEN_SENSOR = 667,
             REQUEST_CODE_WIFI_SENSOR = 668,
             REQUEST_CODE_STEP_COUNTER_SENSOR = 669,
@@ -47,6 +39,14 @@ public class DashboardActivity extends AppCompatActivity {
             SOUND_SENSOR_NAME = "sound",
             LOCATION_SENSOR_NAME = "location";
 
+    private RecyclerView mDistanceRecyclerView;
+    private RecyclerView mCountRecyclerView;
+    private RecyclerView mDefaultRecyclerView;
+
+    private SensorsAdapter mDefaultAdapter;
+    private SensorsAdapter mCountAdapter;
+    private SensorsAdapter mDistanceAdapter;
+
     private List<InformationCard> defaultCards;
     private List<InformationCard> groupCards1;
     private List<InformationCard> groupCards2;
@@ -56,15 +56,13 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
-//
         final ActionBar ab = getSupportActionBar();
         if (ab != null) {
             ab.setIcon(getResources().getDrawable(R.drawable.swanlake));
         }
 
-        groupCount = (RecyclerView) findViewById(R.id.scroll_view_group1);
-        groupDistance = (RecyclerView) findViewById(R.id.scroll_view_group2);
         initialize();
+
         uiThread.start();
     }
 
@@ -87,31 +85,33 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
         ValueExpressionRegistrar.getInstance(this).unregisterAll();
     }
 
     public void showInfo() {
-        String url = "http://www.cs.vu.nl/SWAN/";
+        String url = getString(R.string.swan_website);
         Uri uri = Uri.parse(url);
+
         Intent intent = new Intent();
         intent.setData(uri);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
         startActivity(intent);
     }
 
     public void initialize() {
 
+        mCountRecyclerView = (RecyclerView) findViewById(R.id.scroll_view_group1);
+        mDistanceRecyclerView = (RecyclerView) findViewById(R.id.scroll_view_group2);
+        mDefaultRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
         defaultCards = new ArrayList<>();
         groupCards1 = new ArrayList<>();
         groupCards2 = new ArrayList<>();
 
+        // Process cards data
         for (int i = 0; i < InformationCardsData.getInstance(this).size(); i++) {
             InformationCard card = InformationCardsData.getInstance(this).getTile(i);
             switch (card.getTileType()) {
@@ -128,27 +128,25 @@ public class DashboardActivity extends AppCompatActivity {
             card.process();
         }
 
-        initializeGridView();
+        setupAdapters();
+
         ValueExpressionRegistrar.getInstance(this).start();
     }
 
-    public void initializeGridView() {
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+    public void setupAdapters() {
 
-        adapter = new SensorsAdapter(this, defaultCards, VIEW_TYPE_CARD);
-        adapter1 = new SensorsAdapter(this, groupCards1, VIEW_TYPE_CARD_GROUP);
-        adapter2 = new SensorsAdapter(this, groupCards2, VIEW_TYPE_CARD_GROUP);
+        mDefaultAdapter = new SensorsAdapter(this, defaultCards, VIEW_TYPE_CARD);
+        mCountAdapter = new SensorsAdapter(this, groupCards1, VIEW_TYPE_CARD_GROUP);
+        mDistanceAdapter = new SensorsAdapter(this, groupCards2, VIEW_TYPE_CARD_GROUP);
 
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
-        if (recyclerView != null) {
-            recyclerView.setLayoutManager(mLayoutManager);
-            recyclerView.setAdapter(adapter);
+        if (mDefaultRecyclerView != null) {
+            mDefaultRecyclerView.setAdapter(mDefaultAdapter);
         }
-        if (groupCount != null) {
-            groupCount.setAdapter(adapter1);
+        if (mCountRecyclerView != null) {
+            mCountRecyclerView.setAdapter(mCountAdapter);
         }
-        if (groupDistance != null) {
-            groupDistance.setAdapter(adapter2);
+        if (mDistanceRecyclerView != null) {
+            mDistanceRecyclerView.setAdapter(mDistanceAdapter);
         }
     }
 
@@ -160,9 +158,9 @@ public class DashboardActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        adapter.notifyDataSetChanged();
-                        adapter1.notifyDataSetChanged();
-                        adapter2.notifyDataSetChanged();
+                        mDefaultAdapter.notifyDataSetChanged();
+                        mCountAdapter.notifyDataSetChanged();
+                        mDistanceAdapter.notifyDataSetChanged();
                     }
                 });
 

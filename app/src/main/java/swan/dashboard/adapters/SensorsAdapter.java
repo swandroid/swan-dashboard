@@ -48,7 +48,7 @@ public class SensorsAdapter extends RecyclerView.Adapter<SensorsAdapter.MyViewHo
                 View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view, parent, false);
                 return new MyViewHolder(itemView);
             case DashboardActivity.VIEW_TYPE_CARD_GROUP:
-                itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view_header, parent, false);
+                itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_view_group, parent, false);
                 return new MyViewHolder(itemView);
         }
         return null;

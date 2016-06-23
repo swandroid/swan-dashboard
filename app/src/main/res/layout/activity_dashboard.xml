@@ -22,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/fab_margin"
                 android:fontFamily="sans-serif-medium"
-                android:text="Where is the nearest ...? "
+                android:text="@string/where_is_the_nearest"
                 android:textColor="#000"
                 android:textSize="20sp"/>
 
@@ -57,7 +57,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/fab_margin"
                 android:fontFamily="sans-serif-medium"
-                android:text="How many?"
+                android:text="@string/how_many"
                 android:textColor="#000"
                 android:textSize="20sp"/>
 
@@ -92,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/fab_margin"
                 android:fontFamily="sans-serif-medium"
-                android:text="What is the ...? "
+                android:text="@string/what_is_the"
                 android:textColor="#000"
                 android:textSize="20sp"/>
 
@@ -100,7 +100,8 @@
                 android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="vertical"/>
+                android:scrollbars="vertical"
+                app:layoutManager="android.support.v7.widget.LinearLayoutManager"/>
         </LinearLayout>
     </LinearLayout>
 

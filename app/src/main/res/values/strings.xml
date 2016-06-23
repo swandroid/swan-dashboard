@@ -91,4 +91,7 @@
     <string name="preference_key_trash_containers">trash_containers</string>
     <string name="preference_key_ecopassages">ecopassages</string>
     <string name="preference_key_monumental_trees">monumental_trees</string>
+    <string name="where_is_the_nearest">Where is the nearest</string>
+    <string name="how_many">How many</string>
+    <string name="what_is_the">What is the</string>
 </resources>

@@ -22,7 +22,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBg3755yXKGV_HIyeQcVQKKD-c0UBf0wK4" />
+            android:value="<INSERT_API_KEY_HERE>" />
 
         <activity
             android:name=".activities.DashboardActivity"

@@ -25,7 +25,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#000000"
-            android:text="Religious meeting points within 5 km"
             android:gravity="center"
             android:layout_marginTop="@dimen/activity_horizontal_margin"/>
 
@@ -35,8 +34,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textColor="#000000"
-            android:textSize="22sp"
-            android:text="1234567"/>
+            android:textSize="22sp"/>
 
     </LinearLayout>
 
