@@ -104,7 +104,7 @@ public class ValueExpressionRegistrar {
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry)it.next();
             ExpressionManager.unregisterExpression(context, String.valueOf(pair.getKey()));
-            it.remove(); // avoids a ConcurrentModificationException
+            //it.remove(); // avoids a ConcurrentModificationException
         }
     }
 

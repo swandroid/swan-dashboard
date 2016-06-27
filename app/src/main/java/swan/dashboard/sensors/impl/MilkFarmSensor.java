@@ -194,7 +194,7 @@ public class MilkFarmSensor extends LandmarksInformationCard {
                                             OrderedMapMarkerList markers = new OrderedMapMarkerList();
                                             markers.add(nearestFarmWrapper);
                                             setNearestMarkers(markers);
-                                            String value = String.format(Locale.FRANCE, "%.0f m", minDistance);
+                                            String value = String.format("%.0f m", minDistance);
                                             setValue(value);
                                             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
                                             editor.putString(

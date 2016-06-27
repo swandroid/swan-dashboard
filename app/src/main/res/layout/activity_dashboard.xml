@@ -36,7 +36,7 @@
                     android:orientation="horizontal">
 
                     <android.support.v7.widget.RecyclerView
-                        android:id="@+id/scroll_view_group2"
+                        android:id="@+id/recycler_view_distance"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="horizontal"
@@ -71,7 +71,7 @@
                     android:orientation="horizontal">
 
                 <android.support.v7.widget.RecyclerView
-                    android:id="@+id/scroll_view_group1"
+                    android:id="@+id/recycler_view_count"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
@@ -97,7 +97,7 @@
                 android:textSize="20sp"/>
 
             <android.support.v7.widget.RecyclerView
-                android:id="@+id/recycler_view"
+                android:id="@+id/recycler_view_default"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:scrollbars="vertical"

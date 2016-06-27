@@ -40,7 +40,7 @@ public class RequestManager extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... params) {
         StringBuilder sb = new StringBuilder();
-
+        BufferedReader reader = null;
         try {
             URL url;
             if (coordinates != null) {
@@ -50,12 +50,6 @@ public class RequestManager extends AsyncTask<String, Void, String> {
                 url = new URL(this.url);
             }
 
-//                try {
-//                    InetAddress i = InetAddress.getByName("www.google.com");
-//                } catch (UnknownHostException uhe) {
-//                    uhe.printStackTrace();
-//                }
-
             HttpURLConnection urlConnection =
                     (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
             urlConnection.setDoInput(true);
@@ -63,10 +57,10 @@ public class RequestManager extends AsyncTask<String, Void, String> {
             urlConnection.setRequestProperty("Accept", "application/json");
 
             InputStream in = urlConnection.getInputStream();
-            BufferedReader r = new BufferedReader(new InputStreamReader(in));
+            reader = new BufferedReader(new InputStreamReader(in));
 
             String line;
-            while ((line = r.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 sb.append(line);
             }
             urlConnection.disconnect();
@@ -76,6 +70,14 @@ public class RequestManager extends AsyncTask<String, Void, String> {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return sb.toString();

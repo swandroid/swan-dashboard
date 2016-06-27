@@ -47,9 +47,9 @@ public class DashboardActivity extends AppCompatActivity {
     private SensorsAdapter mCountAdapter;
     private SensorsAdapter mDistanceAdapter;
 
-    private List<InformationCard> defaultCards;
-    private List<InformationCard> groupCards1;
-    private List<InformationCard> groupCards2;
+    private List<InformationCard> mDefaultCardsList;
+    private List<InformationCard> mCountCardsList;
+    private List<InformationCard> mDistanceCardsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,9 +85,15 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onPause() {
+        super.onPause();
         ValueExpressionRegistrar.getInstance(this).unregisterAll();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ValueExpressionRegistrar.getInstance(this).start();
     }
 
     public void showInfo() {
@@ -103,41 +109,39 @@ public class DashboardActivity extends AppCompatActivity {
 
     public void initialize() {
 
-        mCountRecyclerView = (RecyclerView) findViewById(R.id.scroll_view_group1);
-        mDistanceRecyclerView = (RecyclerView) findViewById(R.id.scroll_view_group2);
-        mDefaultRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        mCountRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_count);
+        mDistanceRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_distance);
+        mDefaultRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_default);
 
-        defaultCards = new ArrayList<>();
-        groupCards1 = new ArrayList<>();
-        groupCards2 = new ArrayList<>();
+        mDefaultCardsList = new ArrayList<>();
+        mCountCardsList = new ArrayList<>();
+        mDistanceCardsList = new ArrayList<>();
 
         // Process cards data
         for (int i = 0; i < InformationCardsData.getInstance(this).size(); i++) {
             InformationCard card = InformationCardsData.getInstance(this).getTile(i);
             switch (card.getTileType()) {
                 case InformationCardsData.TILE_TYPE_GROUP_COUNT:
-                    groupCards1.add(card);
+                    mCountCardsList.add(card);
                     break;
                 case InformationCardsData.TILE_TYPE_GROUP_DISTANCE:
-                    groupCards2.add(card);
+                    mDistanceCardsList.add(card);
                     break;
                 case InformationCardsData.TILE_TYPE_NORMAL:
-                    defaultCards.add(card);
+                    mDefaultCardsList.add(card);
                     break;
             }
             card.process();
         }
 
         setupAdapters();
-
-        ValueExpressionRegistrar.getInstance(this).start();
     }
 
     public void setupAdapters() {
 
-        mDefaultAdapter = new SensorsAdapter(this, defaultCards, VIEW_TYPE_CARD);
-        mCountAdapter = new SensorsAdapter(this, groupCards1, VIEW_TYPE_CARD_GROUP);
-        mDistanceAdapter = new SensorsAdapter(this, groupCards2, VIEW_TYPE_CARD_GROUP);
+        mDefaultAdapter = new SensorsAdapter(this, mDefaultCardsList, VIEW_TYPE_CARD);
+        mCountAdapter = new SensorsAdapter(this, mCountCardsList, VIEW_TYPE_CARD_GROUP);
+        mDistanceAdapter = new SensorsAdapter(this, mDistanceCardsList, VIEW_TYPE_CARD_GROUP);
 
         if (mDefaultRecyclerView != null) {
             mDefaultRecyclerView.setAdapter(mDefaultAdapter);
@@ -154,7 +158,7 @@ public class DashboardActivity extends AppCompatActivity {
         @Override
         public void run() {
 
-            while(!interrupted()) {
+            while (!interrupted()) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
