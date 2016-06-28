@@ -91,4 +91,11 @@
     <string name="preference_key_trash_containers">trash_containers</string>
     <string name="preference_key_ecopassages">ecopassages</string>
     <string name="preference_key_monumental_trees">monumental_trees</string>
+
+    <!--DIALOGS-->
+    <string name="dialog_no_data_title">Oops!</string>
+    <string name="dialog_no_data_message">No data available (yet).</string>
+    <string name="dialog_dismiss_button">Ok</string>
+
+    <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eu tincidunt diam. Suspendisse fringilla sit amet arcu vitae dignissim. Vestibulum blandit id metus in interdum.</string>
 </resources>

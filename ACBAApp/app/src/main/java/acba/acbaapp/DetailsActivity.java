@@ -10,7 +10,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-public class DetailsActivity extends Activity {
+public class DetailsActivity extends AppCompatActivity {
 
     private int mSensorRequestCode;
     private Intent mSensorConfigurationIntent;
@@ -20,7 +20,7 @@ public class DetailsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent intent = getIntent();
         TextView tv = (TextView)findViewById(R.id.infoCardValue);

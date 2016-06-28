@@ -2,6 +2,7 @@ package acba.acbaapp;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -48,10 +50,10 @@ public class MainActivity extends Activity {
             REQUEST_CODE_LATITUDE_SENSOR = 672,
             REQUEST_CODE_LONGITUDE_SENSOR = 673;
 
-    SharedPreferences prefs;
+    public SharedPreferences prefs;
 
     GridView gridView;
-    GridViewItemAdapter adapter;
+    public GridViewItemAdapter adapter;
 
     public InformationCardsData data;
 
@@ -84,25 +86,13 @@ public class MainActivity extends Activity {
         data.initialize(MainActivity.this);
         initializeGridView();
 
-//        if(!isNetworkAvailable()) {
-//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//            builder.setTitle(getString(R.string.alert_dialog_title))
-//                    .setMessage(getString(R.string.alert_dialog_text))
-//                    .setCancelable(false)
-//                    .setPositiveButton(getString(R.string.alert_dialog_button), new DialogInterface.OnClickListener() {
-//                        public void onClick(DialogInterface dialog, int id) {
-//                            finish();
-//                        }
-//                    });
-//            AlertDialog alert = builder.create();
-//            alert.show();
-//        } else {
-
-        for(int i=0; i<data.size(); i++) {
+        for (int i = 0; i < data.size(); i++) {
             data.getTile(i).process();
         }
 
         ValueExpressionRegistrar.getInstance().start();
+
+        CheckAlertInternetConnection();
     }
 
     private boolean isNetworkAvailable() {
@@ -110,6 +100,22 @@ public class MainActivity extends Activity {
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private void CheckAlertInternetConnection() {
+        if(!isNetworkAvailable()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(getString(R.string.alert_dialog_title))
+                    .setMessage(getString(R.string.alert_dialog_text))
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.alert_dialog_button), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            finish();
+                        }
+                    });
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
     }
 
     /* Invoked on pressing back key from the sensor configuration activity */
@@ -192,8 +198,8 @@ public class MainActivity extends Activity {
         ValueExpressionRegistrar.getInstance().unregister(
                 new int[]
                         {
-//                                REQUEST_CODE_LOCATION_SENSOR,
-//                                REQUEST_CODE_SOUND_SENSOR
+                                REQUEST_CODE_LOCATION_SENSOR,
+                                REQUEST_CODE_SOUND_SENSOR
                         }
         );
     }
@@ -201,11 +207,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        CheckAlertInternetConnection();
         ValueExpressionRegistrar.getInstance().reregister(
                 new int[]
                         {
-//                                REQUEST_CODE_LOCATION_SENSOR,
-//                                REQUEST_CODE_SOUND_SENSOR
+                                REQUEST_CODE_LOCATION_SENSOR,
+                                REQUEST_CODE_SOUND_SENSOR
                         }
         );
     }
@@ -217,8 +224,8 @@ public class MainActivity extends Activity {
         ValueExpressionRegistrar.getInstance().unregister(
                 new int[]
                         {
-//                                REQUEST_CODE_LOCATION_SENSOR,
-//                                REQUEST_CODE_SOUND_SENSOR
+                                REQUEST_CODE_LOCATION_SENSOR,
+                                REQUEST_CODE_SOUND_SENSOR
                         }
         );
     }

@@ -2,6 +2,8 @@ package acba.acbaapp;
 
 import android.content.Context;
 
+import acba.acbaapp.InformationCardStrategy;
+
 /**
  * Created by Alex on 24-May-16.
  */
@@ -73,5 +75,15 @@ public class InformationCard {
 
     public void executeOnClickHandler() {
         strategy.onTileClickHandler(context, positionInGrid);
+    }
+
+    private String getString(int id) {
+        return context.getResources().getString(id);
+    }
+    private int getInt(int id) {
+        return context.getResources().getInteger(id);
+    }
+    private String getStoredPreferenceString(String key, String defaultValue) {
+        return ((MainActivity)context).prefs.getString(key, defaultValue);
     }
 }

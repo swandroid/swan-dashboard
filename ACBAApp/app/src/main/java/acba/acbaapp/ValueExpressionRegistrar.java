@@ -89,32 +89,38 @@ public class ValueExpressionRegistrar {
 
     public void unregister(int[] ids) {
         for(int id : ids) {
-            ExpressionManager.unregisterExpression(context, String.valueOf(id));
+            try {
+                ExpressionManager.unregisterExpression(context, String.valueOf(id));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public void reregister(int[] ids) {
         for(final int sensorId : ids) {
-            try {
-                ExpressionManager.registerValueExpression(
-                        context,
-                        String.valueOf(sensorId),
-                        (ValueExpression) ExpressionFactory.parse(
-                                getExpression((MainActivity) context, sensorId)
-                        ),
-                        new ValueExpressionListener() {
-                            @Override
-                            public void onNewValues(String id, TimestampedValue[] newValues) {
-                                for(SensorResultHandlers handler : handlers.get(sensorId)) {
-                                    handler.onNewValues(id, newValues);
+            if(handlers.keySet().contains(sensorId)) {
+                try {
+                    ExpressionManager.registerValueExpression(
+                            context,
+                            String.valueOf(sensorId),
+                            (ValueExpression) ExpressionFactory.parse(
+                                    getExpression((MainActivity) context, sensorId)
+                            ),
+                            new ValueExpressionListener() {
+                                @Override
+                                public void onNewValues(String id, TimestampedValue[] newValues) {
+                                    for(SensorResultHandlers handler : handlers.get(sensorId)) {
+                                        handler.onNewValues(id, newValues);
+                                    }
                                 }
                             }
-                        }
-                );
-            } catch (ExpressionParseException e) {
-                e.printStackTrace();
-            } catch (SwanException e) {
-                e.printStackTrace();
+                    );
+                } catch (ExpressionParseException e) {
+                    e.printStackTrace();
+                } catch (SwanException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
