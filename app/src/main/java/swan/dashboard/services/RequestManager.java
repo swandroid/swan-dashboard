@@ -84,7 +84,12 @@ public class RequestManager extends AsyncTask<String, Void, String> {
     }
 
     @Override
-    protected void onPostExecute(String result) {
-        handlers.onPostExecute(context, result);
+    protected void onPostExecute(final String result) {
+        new Thread() {
+            @Override
+            public void run() {
+                handlers.onPostExecute(context, result);
+            }
+        }.start();
     }
 }

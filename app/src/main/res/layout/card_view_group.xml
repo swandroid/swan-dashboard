@@ -5,7 +5,9 @@
                                     android:layout_width="130dp"
                                     android:layout_height="200dp"
                                     style="@style/CardViewStyle"
-                                    app:cardUseCompatPadding="true">
+                                    android:clickable="true"
+                                    app:cardUseCompatPadding="true"
+                                    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_height="match_parent"

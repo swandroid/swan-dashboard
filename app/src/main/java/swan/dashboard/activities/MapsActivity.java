@@ -322,6 +322,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             PolylineOptions lineOptions = null;
             MarkerOptions markerOptions = new MarkerOptions();
 
+            if (result.size() == 0)
+                return;
+
             // Traversing through all the routes
             for(int i=0;i<result.size();i++){
                 points = new ArrayList<LatLng>();

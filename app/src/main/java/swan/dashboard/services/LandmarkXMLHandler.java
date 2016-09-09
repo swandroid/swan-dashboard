@@ -5,6 +5,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import swan.dashboard.models.Coordinates;
 import swan.dashboard.models.MapMarker;
@@ -29,8 +32,20 @@ public class LandmarkXMLHandler extends DefaultHandler {
             throws SAXException {
         if(qName.equalsIgnoreCase("object")) {
             String label = attributes.getValue("LABEL");
-            double latMin = Double.parseDouble(attributes.getValue("LATMIN"));
-            double lngMin = Double.parseDouble(attributes.getValue("LNGMIN"));
+            String lat = attributes.getValue("LATMIN");
+            String lng = attributes.getValue("LNGMIN");
+            double latMin, lngMin;
+            if (lat == null || lng == null){
+                String coords = attributes.getValue("COORDS").replace("||", "");
+                int index = coords.indexOf(',');
+
+                lngMin = Double.parseDouble(coords.substring(0, index - 1));
+                latMin = Double.parseDouble(coords.substring(index + 1));
+            } else {
+                latMin = Double.parseDouble(lat);
+                lngMin = Double.parseDouble(lng);
+            }
+
             marker = new MapMarker(label, new Coordinates(latMin, lngMin));
         }
     }
